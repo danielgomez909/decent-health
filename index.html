@@ -409,6 +409,835 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let config = {};
+let logs   = [];
+let chart  = null;
+
+// ── Init ─────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  setDefaultDate();
+  await loadConfig();
+  await loadLogs();
+  renderAll();
+});
+
+function setDefaultDate() {
+  const today = new Date().toISOString().split('T')[0];
+  const el = document.getElementById('entry-date');
+  el.value = today;
+  el.max   = today;
+}
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+// ── Config ───────────────────────────────────────
+async function loadConfig() {
+  const { data, error } = await sb.from('health_config').select('*');
+  if (error) { showToast('Error loading config', 'error'); return; }
+  config = {};
+  (data || []).forEach(r => config[r.key] = r);
+}
+
+function getVal(key, fallback) {
+  return config[key] ? parseFloat(config[key].value) : fallback;
+}
+
+// ── Logs ─────────────────────────────────────────
+async function loadLogs() {
+  // Fetch last 44 days: 30 display + 14-day avg buffer
+  const from = new Date();
+  from.setDate(from.getDate() - 44);
+  const fromStr = from.toISOString().split('T')[0];
+
+  const { data, error } = await sb
+    .from('weight_logs')
+    .select('log_date, weight')
+    .gte('log_date', fromStr)
+    .order('log_date', { ascending: true });
+
+  if (error) { showToast('Error loading logs', 'error'); return; }
+  logs = data || [];
+}
+
+async function saveWeight() {
+  const dateVal = document.getElementById('entry-date').value;
+  const wtVal   = parseFloat(document.getElementById('entry-weight').value);
+
+  if (!dateVal) { showToast('Please select a date', 'error'); return; }
+  if (isNaN(wtVal) || wtVal < 100 || wtVal > 500) {
+    showToast('Please enter a valid weight (100-500)', 'error'); return;
+  }
+
+  const { error } = await sb.from('weight_logs').upsert(
+    { log_date: dateVal, weight: wtVal },
+    { onConflict: 'log_date' }
+  );
+
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+
+  showToast('Weight saved', 'success');
+  document.getElementById('entry-weight').value = '';
+  await loadLogs();
+  renderAll();
+}
+
+// ── Build rows ───────────────────────────────────
+function buildRows() {
+  const avgWindow = getVal('rolling_avg_days', 14);
+  const frozen    = getVal('frozen_target', 235);
+  const goal      = getVal('goal', 220);
+  const commit    = getVal('commit', 0.25);
+  const dailyDrop = commit / 7;
+
+  if (!logs.length) return [];
+
+  // Map log_date -> weight
+  const logMap = {};
+  logs.forEach(l => { logMap[l.log_date] = parseFloat(l.weight); });
+
+  // Date range: first loaded log → today + 7
+  const startDate = new Date(logs[0].log_date + 'T12:00:00');
+  const endDate   = new Date();
+  endDate.setDate(endDate.getDate() + 7);
+
+  // Build continuous date array
+  const allDates = [];
+  const cur = new Date(startDate);
+  while (cur <= endDate) {
+    allDates.push(cur.toISOString().split('T')[0]);
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  // Build rows with target
+  const rows = [];
+  let prevTarget = null;
+
+  allDates.forEach(date => {
+    let target;
+    if (prevTarget === null) {
+      target = frozen;
+    } else if (prevTarget <= frozen) {
+      target = frozen;
+    } else {
+      target = Math.max(goal, prevTarget - dailyDrop);
+    }
+    const weight = (logMap[date] !== undefined) ? logMap[date] : null;
+    rows.push({ date, weight, target });
+    prevTarget = target;
+  });
+
+  // Rolling avg over actual weight entries only
+  const weightedRows = rows.filter(r => r.weight !== null);
+
+  rows.forEach(row => {
+    if (row.weight !== null) {
+      const idx   = weightedRows.findIndex(w => w.date === row.date);
+      const slice = weightedRows.slice(Math.max(0, idx - avgWindow + 1), idx + 1);
+      row.avg      = slice.reduce((s, r) => s + r.weight, 0) / slice.length;
+      row.vsAvg    = row.weight - row.avg;
+      row.vsTarget = row.weight - row.target;
+    } else {
+      // Future: project avg flat from last known
+      const last = weightedRows[weightedRows.length - 1];
+      row.avg      = last ? last.avg : null;
+      row.vsAvg    = null;
+      row.vsTarget = null;
+    }
+  });
+
+  // Streak vs rolling avg
+  rows.forEach((row, i) => {
+    if (row.weight === null) { row.streak = null; return; }
+    const isUnder = row.vsAvg <= 0;
+    if (i === 0 || rows[i - 1].streak === null) {
+      row.streak = isUnder ? 1 : -1;
+    } else {
+      const prev = rows[i - 1].streak;
+      const wasUnder = prev > 0;
+      if (wasUnder === isUnder) {
+        row.streak = isUnder ? prev + 1 : prev - 1;
+      } else {
+        row.streak = isUnder ? 1 : -1;
+      }
+    }
+  });
+
+  return rows;
+}
+
+// ── Render all ───────────────────────────────────
+function renderAll() {
+  const rows = buildRows();
+  document.getElementById('th-avg-days').textContent = getVal('rolling_avg_days', 14);
+  renderStats(rows);
+  renderChart(rows);
+  renderTable(rows);
+}
+
+// ── Stats ────────────────────────────────────────
+function renderStats(rows) {
+  const fmt     = v => v != null ? v.toFixed(1) : '—';
+  const fmtDiff = v => {
+    if (v == null) return { text: '—', cls: '' };
+    return { text: (v > 0 ? '+' : '') + v.toFixed(1), cls: v <= 0 ? 'good' : 'bad' };
+  };
+
+  const lastRow = [...rows].reverse().find(r => r.weight !== null);
+  if (!lastRow) return;
+
+  const d = new Date(lastRow.date + 'T12:00:00');
+  document.getElementById('stat-today').textContent = fmt(lastRow.weight);
+  document.getElementById('stat-today-date').textContent =
+    d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  document.getElementById('stat-avg').textContent = fmt(lastRow.avg);
+  document.getElementById('stat-avg-sub').textContent = getVal('rolling_avg_days', 14) + '-day avg';
+  document.getElementById('stat-target').textContent = fmt(lastRow.target);
+
+  const va = fmtDiff(lastRow.vsAvg);
+  const el1 = document.getElementById('stat-vs-avg');
+  el1.textContent = va.text; el1.className = 'stat-value ' + va.cls;
+
+  const vt = fmtDiff(lastRow.vsTarget);
+  const el2 = document.getElementById('stat-vs-target');
+  el2.textContent = vt.text; el2.className = 'stat-value ' + vt.cls;
+
+  const el3 = document.getElementById('stat-streak');
+  if (lastRow.streak != null) {
+    el3.textContent  = (lastRow.streak > 0 ? '+' : '') + lastRow.streak + 'd';
+    el3.className    = 'stat-value ' + (lastRow.streak > 0 ? 'good' : 'bad');
+  } else {
+    el3.textContent = '—'; el3.className = 'stat-value';
+  }
+}
+
+// ── Chart ────────────────────────────────────────
+function renderChart(rows) {
+  const todayStr = today();
+
+  // Find index of today in rows (today row always exists even without weight)
+  let anchorIdx = rows.findIndex(r => r.date === todayStr);
+  if (anchorIdx === -1) {
+    // fallback: last row on or before today
+    anchorIdx = rows.reduce((best, r, i) => r.date <= todayStr ? i : best, -1);
+  }
+  if (anchorIdx === -1) return;
+
+  const start    = Math.max(0, anchorIdx - 14);
+  const end      = Math.min(rows.length, anchorIdx + 8);
+  const slice    = rows.slice(start, end);
+  const todayMark = slice.findIndex(r => r.date === todayStr);
+
+  const labels  = slice.map(r => {
+    const d = new Date(r.date + 'T12:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  });
+  const weights = slice.map(r => r.weight != null ? +r.weight.toFixed(1) : null);
+  const avgs    = slice.map(r => r.avg    != null ? +r.avg.toFixed(1)    : null);
+  const targets = slice.map(r => r.target != null ? +r.target.toFixed(1) : null);
+
+  if (chart) chart.destroy();
+
+  const todayLinePlugin = {
+    id: 'todayLine',
+    afterDraw(ch) {
+      if (todayMark < 0) return;
+      const x = ch.scales.x.getPixelForIndex(todayMark);
+      const { top, bottom } = ch.scales.y;
+      const c = ch.ctx;
+      c.save();
+      c.beginPath();
+      c.strokeStyle = 'rgba(74,222,128,0.3)';
+      c.lineWidth = 1;
+      c.setLineDash([4, 4]);
+      c.moveTo(x, top);
+      c.lineTo(x, bottom);
+      c.stroke();
+      c.restore();
+    }
+  };
+
+  const ctx = document.getElementById('weight-chart').getContext('2d');
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Weight',
+          data: weights,
+          borderColor: '#e8eaf0',
+          backgroundColor: 'rgba(232,234,240,0.06)',
+          pointBackgroundColor: '#e8eaf0',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 2,
+          tension: 0.3,
+          spanGaps: false,
+        },
+        {
+          label: 'Rolling Avg',
+          data: avgs,
+          borderColor: '#4ade80',
+          backgroundColor: 'transparent',
+          pointRadius: 0,
+          borderWidth: 2,
+          tension: 0.4,
+          spanGaps: true,
+        },
+        {
+          label: 'Target',
+          data: targets,
+          borderColor: '#f59e0b',
+          backgroundColor: 'transparent',
+          pointRadius: 0,
+          borderWidth: 1.5,
+          tension: 0,
+          spanGaps: true,
+          borderDash: [5, 3],
+        }
+      ]
+    },
+    plugins: [todayLinePlugin],
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          labels: {
+            color: '#8b90a7',
+            font: { family: 'DM Sans', size: 12 },
+            boxWidth: 16,
+            padding: 16,
+          }
+        },
+        tooltip: {
+          backgroundColor: '#1a1d27',
+          borderColor: '#2e3250',
+          borderWidth: 1,
+          titleColor: '#e8eaf0',
+          bodyColor: '#8b90a7',
+          callbacks: {
+            label: ctx => {
+              const v = ctx.raw;
+              if (v == null) return null;
+              return ' ' + ctx.dataset.label + ': ' + v.toFixed(1);
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: '#2e3250' },
+          ticks: { color: '#5a5f7a', font: { family: 'DM Sans', size: 11 } }
+        },
+        y: {
+          grid: { color: '#2e3250' },
+          ticks: {
+            color: '#5a5f7a',
+            font: { family: 'DM Sans', size: 11 },
+            callback: v => v.toFixed(0)
+          }
+        }
+      }
+    }
+  });
+}
+
+// ── Table ────────────────────────────────────────
+function renderTable(rows) {
+  // Most recent 30 entries with weight, newest first
+  const withWeight = rows
+    .filter(r => r.weight != null)
+    .slice()
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 30);
+
+  const tbody = document.getElementById('weight-table-body');
+
+  if (!withWeight.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="loading">No entries yet.</td></tr>';
+    return;
+  }
+
+  const fmt = v => v != null ? v.toFixed(1) : '—';
+  const fmtDiff = v => {
+    if (v == null) return '<span class="neutral">—</span>';
+    const cls = v <= 0 ? 'positive' : 'negative';
+    return '<span class="' + cls + '">' + (v > 0 ? '+' : '') + v.toFixed(1) + '</span>';
+  };
+
+  tbody.innerHTML = withWeight.map(r => {
+    const d = new Date(r.date + 'T12:00:00');
+    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const streakHtml = r.streak != null
+      ? '<span class="streak-badge ' + (r.streak > 0 ? 'streak-pos' : 'streak-neg') + '">'
+        + (r.streak > 0 ? '+' : '') + r.streak + '</span>'
+      : '—';
+    return '<tr><td>' + dateStr + '</td><td>' + fmt(r.weight) + '</td><td>'
+      + fmt(r.avg) + '</td><td>' + fmtDiff(r.vsAvg) + '</td><td>'
+      + fmt(r.target) + '</td><td>' + fmtDiff(r.vsTarget) + '</td><td>'
+      + streakHtml + '</td></tr>';
+  }).join('');
+}
+
+// ── Admin ────────────────────────────────────────
+async function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'admin') { await loadConfig(); renderAdmin(); }
+}
+
+function renderAdmin() {
+  const grid  = document.getElementById('config-grid');
+  const order = ['rolling_avg_days', 'frozen_target', 'goal', 'commit'];
+  if (!Object.keys(config).length) {
+    grid.innerHTML = '<div class="loading">No config found.</div>'; return;
+  }
+  grid.innerHTML = order.map(key => {
+    const row = config[key];
+    if (!row) return '';
+    return '<div class="config-row"><div class="form-group"><label>' + row.label
+      + '</label><input type="number" id="cfg-' + key + '" value="' + row.value
+      + '" step="any" style="width:140px" /></div>'
+      + '<div class="config-desc">' + (row.description || '') + '</div></div>';
+  }).join('');
+}
+
+async function saveConfig() {
+  const order = ['rolling_avg_days', 'frozen_target', 'goal', 'commit'];
+  const updates = order.map(key => {
+    const el = document.getElementById('cfg-' + key);
+    if (!el) return null;
+    return { key, value: el.value, label: config[key]?.label || key, description: config[key]?.description || '' };
+  }).filter(Boolean);
+
+  const { error } = await sb.from('health_config').upsert(updates, { onConflict: 'key' });
+  if (error) { showToast('Error saving config', 'error'); return; }
+
+  await loadConfig();
+  renderAll();
+  const msg = document.getElementById('save-msg');
+  msg.classList.add('show');
+  setTimeout(() => msg.classList.remove('show'), 2500);
+  showToast('Config saved', 'success');
+}
+
+// ── Toast ────────────────────────────────────────
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = 'toast show' + (type ? ' ' + type : '');
+  setTimeout(() => { t.className = 'toast'; }, 2800);
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --accent: #4ade80;
+    --accent2: #f59e0b;
+    --danger: #f87171;
+    --text: #e8eaf0;
+    --text2: #8b90a7;
+    --text3: #5a5f7a;
+    --radius: 12px;
+    --font-display: 'DM Serif Display', serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: var(--font-display);
+    font-size: 22px;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .logo span { color: var(--accent); }
+
+  .nav { display: flex; gap: 4px; }
+
+  .nav-btn {
+    background: none;
+    border: none;
+    color: var(--text2);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .nav-btn:hover { background: var(--surface2); color: var(--text); }
+  .nav-btn.active { background: var(--surface2); color: var(--accent); }
+
+  .main { padding: 24px; max-width: 1100px; margin: 0 auto; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .stat {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 26px;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .stat-value.good { color: var(--accent); }
+  .stat-value.warn { color: var(--accent2); }
+  .stat-value.bad  { color: var(--danger); }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  .chart-wrap {
+    position: relative;
+    height: 280px;
+  }
+
+  .entry-form {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  input[type="date"],
+  input[type="number"],
+  input[type="text"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+
+  input:focus { border-color: var(--accent); }
+
+  .btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: #0f1117;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 20px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { opacity: 0.85; }
+
+  .table-wrap { overflow-x: auto; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+  th {
+    text-align: right;
+    padding: 8px 12px;
+    color: var(--text3);
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  th:first-child { text-align: left; }
+
+  td {
+    padding: 9px 12px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+  }
+
+  td:first-child { text-align: left; color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+
+  .positive { color: var(--accent); }
+  .negative { color: var(--danger); }
+  .neutral  { color: var(--text2); }
+
+  .streak-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .streak-pos { background: rgba(74,222,128,0.15); color: var(--accent); }
+  .streak-neg { background: rgba(248,113,113,0.15); color: var(--danger); }
+
+  .config-row {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 16px;
+    align-items: start;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .config-row:last-child { border-bottom: none; }
+
+  .config-desc {
+    font-size: 12px;
+    color: var(--text3);
+    padding-top: 10px;
+    line-height: 1.5;
+  }
+
+  .save-msg {
+    font-size: 12px;
+    color: var(--accent);
+    margin-top: 10px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .save-msg.show { opacity: 1; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 13px;
+    color: var(--text);
+    z-index: 999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: var(--accent); }
+  .toast.error   { border-color: var(--danger); }
+
+  .loading {
+    text-align: center;
+    color: var(--text3);
+    padding: 40px;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">Decent <span>Health</span></div>
+  <nav class="nav">
+    <button class="nav-btn active" data-page="weight" onclick="showPage('weight', this)">Weight</button>
+    <button class="nav-btn" data-page="admin" onclick="showPage('admin', this)">Admin</button>
+  </nav>
+</header>
+
+<div class="main">
+
+  <!-- WEIGHT PAGE -->
+  <div id="page-weight" class="page active">
+
+    <div class="card">
+      <div class="card-title">Log Weight</div>
+      <div class="entry-form">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="entry-date" />
+        </div>
+        <div class="form-group">
+          <label>Weight (lbs)</label>
+          <input type="number" id="entry-weight" step="0.1" min="100" max="500" placeholder="e.g. 238.5" style="width:140px" />
+        </div>
+        <button class="btn" onclick="saveWeight()">Save</button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-label">Weight</div>
+        <div class="stat-value" id="stat-today">—</div>
+        <div class="stat-sub" id="stat-today-date"></div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Rolling Avg</div>
+        <div class="stat-value" id="stat-avg">—</div>
+        <div class="stat-sub" id="stat-avg-sub"></div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">vs Average</div>
+        <div class="stat-value" id="stat-vs-avg">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Target</div>
+        <div class="stat-value" id="stat-target">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">vs Target</div>
+        <div class="stat-value" id="stat-vs-target">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Streak</div>
+        <div class="stat-value" id="stat-streak">—</div>
+        <div class="stat-sub">vs rolling avg</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        21-Day Window
+        <span style="font-family:var(--font-body);font-size:12px;color:var(--text3);font-weight:400;margin-left:8px">14 days back · 7 days forward</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="weight-chart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Recent Log</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Weight</th>
+              <th>Avg (<span id="th-avg-days">14</span>d)</th>
+              <th>vs Avg</th>
+              <th>Target</th>
+              <th>vs Target</th>
+              <th>Streak</th>
+            </tr>
+          </thead>
+          <tbody id="weight-table-body">
+            <tr><td colspan="7" class="loading">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN PAGE -->
+  <div id="page-admin" class="page">
+    <div class="card">
+      <div class="card-title">App Configuration</div>
+      <div id="config-grid">
+        <div class="loading">Loading…</div>
+      </div>
+      <div style="margin-top:20px">
+        <button class="btn" onclick="saveConfig()">Save Changes</button>
+        <div class="save-msg" id="save-msg">✓ Configuration saved</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://ntrhptxetvdjhoqfaytl.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50cmhwdHhldHZkamhvcWZheXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2NTc2NDQsImV4cCI6MjA5NTIzMzY0NH0.dWpCNGNtUMAqFC3S22s-xxIUMYWyH9TnPwAhyVYuhqk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let config = {};
 let logs = [];
 let chart = null;
 
@@ -440,11 +1269,16 @@ function getVal(key, fallback) {
 
 // ── Logs ──────────────────────────────────────────────────
 async function loadLogs() {
+  // Load last 30 days of data plus a buffer for rolling avg calculation
+  const bufferDate = new Date();
+  bufferDate.setDate(bufferDate.getDate() - 44); // 30 days + 14 day avg buffer
+  const fromDate = bufferDate.toISOString().split('T')[0];
+
   const { data, error } = await sb
     .from('weight_logs')
     .select('*')
-    .order('log_date', { ascending: true })
-    .limit(2000);
+    .gte('log_date', fromDate)
+    .order('log_date', { ascending: true });
   if (error) { showToast('Error loading logs', 'error'); return; }
   logs = data || [];
 }
@@ -489,6 +1323,7 @@ function buildRows() {
   const startDate = new Date(logs[0].log_date + 'T00:00:00');
   const endDate   = new Date();
   endDate.setDate(endDate.getDate() + 7);
+  const todayStr  = new Date().toISOString().split('T')[0];
 
   // Build continuous date array
   const allDates = [];
