@@ -691,6 +691,14 @@ function renderChart(rows) {
   };
 
   const ctx = document.getElementById('weight-chart').getContext('2d');
+  // Dismiss tooltip on tap outside chart (mobile)
+  document.addEventListener('touchstart', e => {
+    if (chart && !ctx.canvas.contains(e.target)) {
+      chart.tooltip.setActiveElements([], {x:0,y:0});
+      chart.update();
+    }
+  }, { passive: true });
+
   chart = new Chart(ctx, {
     type: 'line',
     data: {
@@ -736,8 +744,8 @@ function renderChart(rows) {
       responsive: true,
       maintainAspectRatio: false,
       layout: { padding: { left: 0, right: 0, top: 4, bottom: 0 } },
-      interaction: { mode: 'nearest', intersect: true },
-      events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove', 'touchend'],
+      interaction: { mode: 'index', intersect: false },
+      events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
       plugins: {
         legend: {
           labels: {
