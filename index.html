@@ -950,26 +950,30 @@ function buildRows() {
     prevTarget = target;
   });
 
-  // Rolling average: only over rows that have actual weights
-  // For each row, look back avgWindow actual weight entries
-  const weightedRows = rows.filter(r => r.weight !== null);
-
+  // Rolling average: date-windowed calculation for ALL rows (past and future)
+  // For each row, find all entries within the prior N calendar days (inclusive)
+  // and average whatever weights exist in that window. Missing days are ignored.
   rows.forEach(row => {
+    const windowStart = new Date(row.date + 'T12:00:00');
+    windowStart.setDate(windowStart.getDate() - avgWindow);
+    const windowStartStr = windowStart.toISOString().split('T')[0];
+
+    const inWindow = rows.filter(r =>
+      r.weight !== null &&
+      r.date >= windowStartStr &&
+      r.date <= row.date
+    );
+
+    if (inWindow.length) {
+      row.avg = inWindow.reduce((s, r) => s + r.weight, 0) / inWindow.length;
+    } else {
+      row.avg = null;
+    }
+
     if (row.weight !== null) {
-      const idx = weightedRows.findIndex(w => w.date === row.date);
-      const slice = weightedRows.slice(Math.max(0, idx - avgWindow + 1), idx + 1);
-      row.avg = slice.reduce((s, r) => s + r.weight, 0) / slice.length;
-      row.vsAvg    = row.weight - row.avg;
+      row.vsAvg    = row.avg != null ? row.weight - row.avg : null;
       row.vsTarget = row.weight - row.target;
     } else {
-      // Future row: extrapolate avg from last N actual weight entries before this date
-      const priorEntries = weightedRows.filter(w => w.date < row.date);
-      if (priorEntries.length) {
-        const slice = priorEntries.slice(Math.max(0, priorEntries.length - avgWindow));
-        row.avg = slice.reduce((s, r) => s + r.weight, 0) / slice.length;
-      } else {
-        row.avg = null;
-      }
       row.vsAvg    = null;
       row.vsTarget = null;
     }
@@ -1108,7 +1112,7 @@ function renderChart(rows) {
           pointHoverRadius: 6,
           borderWidth: 2,
           tension: 0.3,
-          spanGaps: false,
+          spanGaps: true,
         },
         {
           label: 'Rolling Avg',
