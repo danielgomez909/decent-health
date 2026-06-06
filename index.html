@@ -443,7 +443,8 @@ async function loadLogs() {
   const { data, error } = await sb
     .from('weight_logs')
     .select('*')
-    .order('log_date', { ascending: true });
+    .order('log_date', { ascending: true })
+    .limit(2000);
   if (error) { showToast('Error loading logs', 'error'); return; }
   logs = data || [];
 }
@@ -617,7 +618,11 @@ function renderStats(rows) {
 
 function renderChart(rows) {
   const today = new Date().toISOString().split('T')[0];
-  const todayIdx = rows.findIndex(r => r.date === today);
+  let todayIdx = rows.findIndex(r => r.date === today);
+  // If today has no entry, find last row on or before today
+  if (todayIdx === -1) {
+    todayIdx = rows.reduce((best, r, i) => r.date <= today ? i : best, 0);
+  }
   if (todayIdx === -1) return;
 
   const start   = Math.max(0, todayIdx - 14);
@@ -744,7 +749,7 @@ function renderChart(rows) {
 }
 
 function renderTable(rows) {
-  const withWeight = rows.filter(r => r.weight != null).reverse().slice(0, 30);
+  const withWeight = rows.filter(r => r.weight != null).slice().reverse().slice(0, 30);
   const tbody = document.getElementById('weight-table-body');
 
   if (!withWeight.length) {
