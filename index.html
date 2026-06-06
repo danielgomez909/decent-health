@@ -1073,6 +1073,11 @@ function renderChart(rows) {
   const avgs    = chartSlice.map(r => r.avg    != null ? +r.avg.toFixed(1)    : null);
   const targets = chartSlice.map(r => r.target != null ? +r.target.toFixed(2) : null);
 
+  // Y-axis bounds: min/max across all series + 0.5 padding
+  const allVals = [...weights, ...avgs, ...targets].filter(v => v != null);
+  const yMin = allVals.length ? Math.min(...allVals) - 0.5 : 220;
+  const yMax = allVals.length ? Math.max(...allVals) + 0.5 : 250;
+
   if (chart) chart.destroy();
 
   const todayLinePlugin = {
@@ -1173,13 +1178,14 @@ function renderChart(rows) {
           ticks: { color: '#5a5f7a', font: { family: 'DM Sans', size: 11 } }
         },
         y: {
+          min: yMin,
+          max: yMax,
           grid: { color: '#2e3250' },
           ticks: {
             color: '#5a5f7a',
             font: { family: 'DM Sans', size: 11 },
             callback: v => v.toFixed(0)
-          },
-          grace: 2
+          }
         }
       }
     }
