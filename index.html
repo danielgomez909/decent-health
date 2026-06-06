@@ -405,7 +405,7 @@
 
 <script>
 const SUPABASE_URL = 'https://ntrhptxetvdjhoqfaytl.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50cmhwdHhldHZkamhvcWZheXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUyNzU3MTgsImV4cCI6MjA2MDg1MTcxOH0.aBRDFTMdHBGSAkrfhMBRVlGhJJUYMCw9FFuVZBuRhGM';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50cmhwdHhldHZkamhvcWZheXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2NTc2NDQsImV4cCI6MjA5NTIzMzY0NH0.dWpCNGNtUMAqFC3S22s-xxIUMYWyH9TnPwAhyVYuhqk';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let config = {};
@@ -779,12 +779,15 @@ function renderTable(rows) {
 }
 
 // ── Admin ─────────────────────────────────────────────────
-function showPage(name, btn) {
+async function showPage(name, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'admin') renderAdmin();
+  if (name === 'admin') {
+    await loadConfig();
+    renderAdmin();
+  }
 }
 
 function renderAdmin() {
