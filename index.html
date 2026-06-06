@@ -962,8 +962,14 @@ function buildRows() {
       row.vsAvg    = row.weight - row.avg;
       row.vsTarget = row.weight - row.target;
     } else {
-      // Future: no weight data, no avg
-      row.avg      = null;
+      // Future row: extrapolate avg from last N actual weight entries before this date
+      const priorEntries = weightedRows.filter(w => w.date < row.date);
+      if (priorEntries.length) {
+        const slice = priorEntries.slice(Math.max(0, priorEntries.length - avgWindow));
+        row.avg = slice.reduce((s, r) => s + r.weight, 0) / slice.length;
+      } else {
+        row.avg = null;
+      }
       row.vsAvg    = null;
       row.vsTarget = null;
     }
@@ -1042,18 +1048,17 @@ function renderStats(rows) {
 }
 
 function renderChart(rows) {
-  const today = new Date().toISOString().split('T')[0];
-  let todayIdx = rows.findIndex(r => r.date === today);
-  // If today has no entry, find last row on or before today
-  if (todayIdx === -1) {
-    todayIdx = rows.reduce((best, r, i) => r.date <= today ? i : best, 0);
-  }
-  if (todayIdx === -1) return;
+  const todayStr = new Date().toISOString().split('T')[0];
 
-  const start   = Math.max(0, todayIdx - 14);
-  const end     = Math.min(rows.length, todayIdx + 8);
+  // Anchor on last row with actual weight, show 14 back + 7 forward from there
+  const lastWeightIdx = rows.reduce((best, r, i) => r.weight !== null ? i : best, -1);
+  if (lastWeightIdx === -1) return;
+  const anchorIdx = lastWeightIdx;
+
+  const start   = Math.max(0, anchorIdx - 14);
+  const end     = Math.min(rows.length, anchorIdx + 8);
   const chartSlice = rows.slice(start, end);
-  const todayMark = chartSlice.findIndex(r => r.date === today);
+  const todayMark = chartSlice.findIndex(r => r.date === todayStr);
 
   const labels  = chartSlice.map(r => {
     const d = new Date(r.date + 'T00:00:00');
