@@ -74,7 +74,8 @@
   .nav-btn:hover { background: var(--surface2); color: var(--text); }
   .nav-btn.active { background: var(--surface2); color: var(--accent); }
 
-  .main { padding: 24px; max-width: 1100px; margin: 0 auto; }
+  .main { padding: 10px; max-width: 1100px; margin: 0 auto; }
+  @media (min-width: 600px) { .main { padding: 24px; } }
 
   .page { display: none; }
   .page.active { display: block; }
@@ -83,8 +84,12 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 20px;
-    margin-bottom: 16px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+
+  @media (min-width: 600px) {
+    .card { padding: 20px; margin-bottom: 16px; }
   }
 
   .card-title {
@@ -96,30 +101,34 @@
 
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-    margin-bottom: 16px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  @media (min-width: 600px) {
+    .stats-grid { grid-template-columns: repeat(6, 1fr); }
   }
 
   .stat {
     background: var(--surface2);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
+    border-radius: 8px;
+    padding: 10px 12px;
   }
 
   .stat-label {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
     color: var(--text3);
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-bottom: 6px;
+    letter-spacing: 0.6px;
+    margin-bottom: 4px;
   }
 
   .stat-value {
     font-family: var(--font-display);
-    font-size: 26px;
+    font-size: 20px;
     color: var(--text);
     line-height: 1;
   }
@@ -129,21 +138,24 @@
   .stat-value.bad  { color: var(--danger); }
 
   .stat-sub {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--text3);
-    margin-top: 4px;
+    margin-top: 3px;
   }
 
   .chart-wrap {
     position: relative;
-    height: 280px;
+    height: 220px;
+  }
+  @media (min-width: 600px) {
+    .chart-wrap { height: 280px; }
   }
 
   .entry-form {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: flex-end;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
 
   .form-group {
@@ -169,7 +181,7 @@
     color: var(--text);
     font-family: var(--font-body);
     font-size: 14px;
-    padding: 8px 12px;
+    padding: 6px 10px;
     outline: none;
     transition: border-color 0.15s;
     width: 100%;
@@ -473,7 +485,8 @@
   .nav-btn:hover { background: var(--surface2); color: var(--text); }
   .nav-btn.active { background: var(--surface2); color: var(--accent); }
 
-  .main { padding: 24px; max-width: 1100px; margin: 0 auto; }
+  .main { padding: 10px; max-width: 1100px; margin: 0 auto; }
+  @media (min-width: 600px) { .main { padding: 24px; } }
 
   .page { display: none; }
   .page.active { display: block; }
@@ -482,8 +495,12 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 20px;
-    margin-bottom: 16px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+
+  @media (min-width: 600px) {
+    .card { padding: 20px; margin-bottom: 16px; }
   }
 
   .card-title {
@@ -495,30 +512,34 @@
 
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-    margin-bottom: 16px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  @media (min-width: 600px) {
+    .stats-grid { grid-template-columns: repeat(6, 1fr); }
   }
 
   .stat {
     background: var(--surface2);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
+    border-radius: 8px;
+    padding: 10px 12px;
   }
 
   .stat-label {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
     color: var(--text3);
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-bottom: 6px;
+    letter-spacing: 0.6px;
+    margin-bottom: 4px;
   }
 
   .stat-value {
     font-family: var(--font-display);
-    font-size: 26px;
+    font-size: 20px;
     color: var(--text);
     line-height: 1;
   }
@@ -528,21 +549,24 @@
   .stat-value.bad  { color: var(--danger); }
 
   .stat-sub {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--text3);
-    margin-top: 4px;
+    margin-top: 3px;
   }
 
   .chart-wrap {
     position: relative;
-    height: 280px;
+    height: 220px;
+  }
+  @media (min-width: 600px) {
+    .chart-wrap { height: 280px; }
   }
 
   .entry-form {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: flex-end;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
 
   .form-group {
@@ -568,7 +592,7 @@
     color: var(--text);
     font-family: var(--font-body);
     font-size: 14px;
-    padding: 8px 12px;
+    padding: 6px 10px;
     outline: none;
     transition: border-color 0.15s;
     width: 100%;
@@ -841,7 +865,7 @@ function getVal(key, fallback) {
 async function loadLogs() {
   // Load last 30 days of data plus a buffer for rolling avg calculation
   const bufferDate = new Date();
-  bufferDate.setDate(bufferDate.getDate() - 44); // 30 days + 14 day avg buffer
+  bufferDate.setDate(bufferDate.getDate() - 74); // 60 days display + 14 day avg buffer
   const fromDate = bufferDate.toISOString().split('T')[0];
 
   const { data, error } = await sb
@@ -938,12 +962,8 @@ function buildRows() {
       row.vsAvg    = row.weight - row.avg;
       row.vsTarget = row.weight - row.target;
     } else {
-      // Future: project avg flat from last known
-      if (weightedRows.length) {
-        row.avg = weightedRows[weightedRows.length - 1].avg || null;
-      } else {
-        row.avg = null;
-      }
+      // Future: no weight data, no avg
+      row.avg      = null;
       row.vsAvg    = null;
       row.vsTarget = null;
     }
@@ -1112,6 +1132,7 @@ function renderChart(rows) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { left: 0, right: 0, top: 4, bottom: 0 } },
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: {
@@ -1149,7 +1170,7 @@ function renderChart(rows) {
             font: { family: 'DM Sans', size: 11 },
             callback: v => v.toFixed(0)
           },
-          grace: '5%'
+          grace: 2
         }
       }
     }
