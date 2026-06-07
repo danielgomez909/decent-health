@@ -943,10 +943,8 @@ async function showPage(name, btn) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'admin') {
-    await loadConfig();
-    renderAdmin();
-  }
+  if (name === 'admin') { await loadConfig(); renderAdmin(); }
+  if (name === 'leg')   { setDefaultLegDates(); await loadLegData(); renderLeg(); }
 }
 
 function renderAdmin() {
