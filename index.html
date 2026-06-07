@@ -310,6 +310,7 @@
   <div class="logo">Decent <span>Health</span></div>
   <nav class="nav">
     <button class="nav-btn active" data-page="weight" onclick="showPage('weight', this)">Weight</button>
+    <button class="nav-btn" data-page="leg" onclick="showPage('leg', this)">Leg</button>
     <button class="nav-btn" data-page="admin" onclick="showPage('admin', this)">Admin</button>
   </nav>
 </header>
@@ -391,6 +392,118 @@
           </thead>
           <tbody id="weight-table-body">
             <tr><td colspan="7" class="loading">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEG PAGE -->
+  <div id="page-leg" class="page">
+
+    <div class="card">
+      <div class="card-title">Log Measurements</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Today's Measurements</div>
+          <div class="entry-form" style="flex-direction:column;gap:8px">
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="leg-meas-date" />
+            </div>
+            <div class="form-group">
+              <label>Right Ankle (cm)</label>
+              <input type="number" id="leg-right" step="0.25" min="20" max="60" placeholder="e.g. 28.50" />
+            </div>
+            <div class="form-group">
+              <label>Left Ankle (cm)</label>
+              <input type="number" id="leg-left" step="0.25" min="20" max="60" placeholder="e.g. 26.75" />
+            </div>
+          </div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Yesterday's Context</div>
+          <div class="entry-form" style="flex-direction:column;gap:8px">
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="leg-ctx-date" />
+            </div>
+            <div class="form-group">
+              <label>Wore Compression Sock</label>
+              <select id="leg-sock" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:6px 10px;outline:none;width:100%">
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Activity Score</label>
+              <select id="leg-activity" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:6px 10px;outline:none;width:100%">
+                <option value="0">0 — Good (walking/rest)</option>
+                <option value="1">1 — Mixed</option>
+                <option value="2">2 — Difficult (sitting/standing/travel)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Activity Notes</label>
+              <input type="text" id="leg-notes" placeholder="Optional notes" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="btn" onclick="saveLeg()">Save</button>
+    </div>
+
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat">
+        <div class="stat-label">Right Ankle</div>
+        <div class="stat-value" id="leg-stat-right">—</div>
+        <div class="stat-sub" id="leg-stat-right-sub"></div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Left Ankle</div>
+        <div class="stat-value" id="leg-stat-left">—</div>
+        <div class="stat-sub" id="leg-stat-left-sub"></div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Difference</div>
+        <div class="stat-value" id="leg-stat-diff">—</div>
+        <div class="stat-sub">right − left</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        21-Day Window
+        <span style="font-family:var(--font-body);font-size:12px;color:var(--text3);font-weight:400;margin-left:8px">14 days back · 7 days forward</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="leg-chart"></canvas>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--text3);flex-wrap:wrap">
+        <span>Background: <span style="color:#4ade80">■</span> Good activity &nbsp;<span style="color:#f59e0b">■</span> Mixed &nbsp;<span style="color:#f87171">■</span> Difficult</span>
+        <span>Dot below date: <span style="color:#4ade80">●</span> Sock worn &nbsp;<span style="color:#5a5f7a">●</span> No sock</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Recent Log</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Meas. Date</th>
+              <th>Right</th>
+              <th>Left</th>
+              <th>Diff</th>
+              <th>Wt Trend</th>
+              <th>Ctx Date</th>
+              <th>Sock</th>
+              <th>Activity</th>
+              <th style="text-align:left">Notes</th>
+            </tr>
+          </thead>
+          <tbody id="leg-table-body">
+            <tr><td colspan="9" class="loading">Loading…</td></tr>
           </tbody>
         </table>
       </div>
@@ -882,6 +995,372 @@ async function saveConfig() {
   msg.classList.add('show');
   setTimeout(() => msg.classList.remove('show'), 2500);
   showToast('Config saved ✓', 'success');
+}
+
+// ── Leg ──────────────────────────────────────────
+let legLogs    = [];
+let legContext = [];
+let legChart   = null;
+
+function setDefaultLegDates() {
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+  document.getElementById('leg-meas-date').value = todayStr;
+  document.getElementById('leg-meas-date').max   = todayStr;
+  document.getElementById('leg-ctx-date').value  = yesterdayStr;
+  document.getElementById('leg-ctx-date').max    = todayStr;
+}
+
+async function loadLegData() {
+  const from = new Date();
+  from.setDate(from.getDate() - 74);
+  const fromStr = from.toISOString().split('T')[0];
+
+  const [logsRes, ctxRes] = await Promise.all([
+    sb.from('leg_logs').select('*').gte('log_date', fromStr).order('log_date', { ascending: true }),
+    sb.from('leg_context').select('*').gte('context_date', fromStr).order('context_date', { ascending: true })
+  ]);
+
+  if (logsRes.error) { showToast('Error loading leg data', 'error'); return; }
+  if (ctxRes.error)  { showToast('Error loading leg context', 'error'); return; }
+
+  legLogs    = logsRes.data || [];
+  legContext  = ctxRes.data  || [];
+}
+
+async function saveLeg() {
+  const measDate = document.getElementById('leg-meas-date').value;
+  const ctxDate  = document.getElementById('leg-ctx-date').value;
+  const right    = parseFloat(document.getElementById('leg-right').value);
+  const left     = parseFloat(document.getElementById('leg-left').value);
+  const sock     = parseInt(document.getElementById('leg-sock').value);
+  const activity = parseInt(document.getElementById('leg-activity').value);
+  const notes    = document.getElementById('leg-notes').value.trim();
+
+  if (!measDate) { showToast('Please select a measurement date', 'error'); return; }
+  if (isNaN(right) || right < 20 || right > 60) { showToast('Please enter a valid right ankle measurement', 'error'); return; }
+  if (isNaN(left)  || left  < 20 || left  > 60) { showToast('Please enter a valid left ankle measurement', 'error'); return; }
+
+  const [measRes, ctxRes] = await Promise.all([
+    sb.from('leg_logs').upsert({ log_date: measDate, right_ankle: right, left_ankle: left }, { onConflict: 'log_date' }),
+    sb.from('leg_context').upsert({ context_date: ctxDate, wore_sock: sock, activity_score: activity, activity_notes: notes || null }, { onConflict: 'context_date' })
+  ]);
+
+  if (measRes.error) { showToast('Error saving measurements: ' + measRes.error.message, 'error'); return; }
+  if (ctxRes.error)  { showToast('Error saving context: ' + ctxRes.error.message, 'error'); return; }
+
+  showToast('Leg data saved ✓', 'success');
+  document.getElementById('leg-right').value = '';
+  document.getElementById('leg-left').value  = '';
+  document.getElementById('leg-notes').value = '';
+  await loadLegData();
+  renderLeg();
+}
+
+function renderLeg() {
+  renderLegStats();
+  renderLegChart();
+  renderLegTable();
+}
+
+function renderLegStats() {
+  const last = [...legLogs].reverse()[0];
+  if (!last) return;
+
+  const fmt = v => v != null ? v.toFixed(2) : '—';
+  const diff = last.right_ankle - last.left_ankle;
+  const d = new Date(last.log_date + 'T12:00:00');
+  const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  document.getElementById('leg-stat-right').textContent = fmt(last.right_ankle);
+  document.getElementById('leg-stat-right-sub').textContent = dateStr;
+  document.getElementById('leg-stat-left').textContent  = fmt(last.left_ankle);
+  document.getElementById('leg-stat-left-sub').textContent = dateStr;
+
+  const diffEl = document.getElementById('leg-stat-diff');
+  diffEl.textContent  = fmt(diff);
+  diffEl.className    = 'stat-value ' + (diff > 1.5 ? 'bad' : diff > 0.75 ? 'warn' : 'good');
+}
+
+function renderLegChart() {
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  // Build continuous date range: last leg entry anchor
+  const lastLogIdx = legLogs.length - 1;
+  if (lastLogIdx < 0) return;
+
+  // Build date array: 14 back from last entry, 7 forward
+  const anchorDate = new Date(legLogs[lastLogIdx].log_date + 'T12:00:00');
+  const startDate  = new Date(anchorDate); startDate.setDate(startDate.getDate() - 14);
+  const endDate    = new Date(anchorDate); endDate.setDate(endDate.getDate() + 7);
+
+  const dates = [];
+  const cur = new Date(startDate);
+  while (cur <= endDate) {
+    dates.push(cur.toISOString().split('T')[0]);
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  // Maps
+  const logMap = {};
+  legLogs.forEach(l => { logMap[l.log_date] = l; });
+  const ctxMap = {};
+  legContext.forEach(c => { ctxMap[c.context_date] = c; });
+
+  const labels  = dates.map(d => {
+    const dt = new Date(d + 'T12:00:00');
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  });
+  const rights  = dates.map(d => logMap[d] ? +parseFloat(logMap[d].right_ankle).toFixed(2) : null);
+  const diffs   = dates.map(d => logMap[d] ? +(logMap[d].right_ankle - logMap[d].left_ankle).toFixed(2) : null);
+
+  // Y bounds
+  const allVals = [...rights, ...diffs].filter(v => v != null);
+  const yMin = allVals.length ? Math.min(...allVals) - 0.5 : 25;
+  const yMax = allVals.length ? Math.max(...allVals) + 0.5 : 32;
+
+  // Activity background plugin
+  const activityBgPlugin = {
+    id: 'activityBg',
+    beforeDraw(ch) {
+      const { ctx, scales: { x, y } } = ch;
+      dates.forEach((d, i) => {
+        const ctxData = ctxMap[d];
+        if (!ctxData) return;
+        const score = ctxData.activity_score;
+        const color = score === 0 ? 'rgba(74,222,128,0.12)'
+                    : score === 1 ? 'rgba(245,158,11,0.12)'
+                    : 'rgba(248,113,113,0.12)';
+        const xStart = x.getPixelForValue(i - 0.5);
+        const xEnd   = x.getPixelForValue(i + 0.5);
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.fillRect(xStart, y.top, xEnd - xStart, y.bottom - y.top);
+        ctx.restore();
+      });
+    }
+  };
+
+  // Sock dots plugin
+  const sockDotsPlugin = {
+    id: 'sockDots',
+    afterDraw(ch) {
+      const { ctx, scales: { x, y } } = ch;
+      dates.forEach((d, i) => {
+        const ctxData = ctxMap[d];
+        if (!ctxData) return;
+        const color = ctxData.wore_sock === 1 ? '#4ade80' : '#5a5f7a';
+        const xPos  = x.getPixelForValue(i);
+        const yPos  = y.bottom + 10;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(xPos, yPos, 3, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+  };
+
+  // Today line plugin
+  const todayMark = dates.indexOf(todayStr);
+  const todayLinePlugin = {
+    id: 'legTodayLine',
+    afterDraw(ch) {
+      if (todayMark < 0) return;
+      const meta = ch.getDatasetMeta(0);
+      if (!meta.data[todayMark]) return;
+      const xPos = meta.data[todayMark].x;
+      const { top, bottom } = ch.scales.y;
+      const c = ch.ctx;
+      c.save();
+      c.beginPath();
+      c.strokeStyle = 'rgba(74,222,128,0.3)';
+      c.lineWidth = 1;
+      c.setLineDash([4, 4]);
+      c.moveTo(xPos, top);
+      c.lineTo(xPos, bottom);
+      c.stroke();
+      c.restore();
+    }
+  };
+
+  if (legChart) legChart.destroy();
+
+  const canvas = document.getElementById('leg-chart');
+  const chartCtx = canvas.getContext('2d');
+
+  // Add bottom padding for sock dots
+  canvas.style.paddingBottom = '14px';
+
+  legChart = new Chart(chartCtx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Right Ankle',
+          data: rights,
+          borderColor: '#e8eaf0',
+          backgroundColor: 'transparent',
+          pointBackgroundColor: '#e8eaf0',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 2,
+          tension: 0.3,
+          spanGaps: true,
+        },
+        {
+          label: 'Difference (R−L)',
+          data: diffs,
+          borderColor: '#a78bfa',
+          backgroundColor: 'transparent',
+          pointBackgroundColor: '#a78bfa',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 2,
+          tension: 0.3,
+          spanGaps: true,
+        }
+      ]
+    },
+    plugins: [activityBgPlugin, sockDotsPlugin, todayLinePlugin],
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { left: 0, right: 0, top: 4, bottom: 14 } },
+      interaction: { mode: 'index', intersect: false },
+      events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
+      plugins: {
+        legend: {
+          labels: { color: '#8b90a7', font: { family: 'DM Sans', size: 12 }, boxWidth: 16, padding: 16 }
+        },
+        tooltip: {
+          backgroundColor: '#1a1d27',
+          borderColor: '#2e3250',
+          borderWidth: 1,
+          titleColor: '#e8eaf0',
+          bodyColor: '#8b90a7',
+          callbacks: {
+            label: ctx => {
+              const v = ctx.raw;
+              if (v == null) return null;
+              return ' ' + ctx.dataset.label + ': ' + v.toFixed(2) + ' cm';
+            },
+            afterBody: (items) => {
+              const idx = items[0]?.dataIndex;
+              if (idx == null) return;
+              const d = dates[idx];
+              const c = ctxMap[d];
+              if (!c) return;
+              const sockLabel     = c.wore_sock === 1 ? 'Yes' : 'No';
+              const activityLabel = c.activity_score === 0 ? 'Good' : c.activity_score === 1 ? 'Mixed' : 'Difficult';
+              const lines = [' Sock: ' + sockLabel, ' Activity: ' + activityLabel];
+              if (c.activity_notes) lines.push(' Notes: ' + c.activity_notes);
+              return lines;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: '#2e3250' },
+          ticks: { color: '#5a5f7a', font: { family: 'DM Sans', size: 11 } }
+        },
+        y: {
+          min: yMin,
+          max: yMax,
+          grid: { color: '#2e3250' },
+          ticks: { color: '#5a5f7a', font: { family: 'DM Sans', size: 11 }, callback: v => v.toFixed(1) }
+        }
+      }
+    }
+  });
+
+  // Dismiss tooltip on tap outside
+  document.addEventListener('touchstart', e => {
+    if (legChart && !canvas.contains(e.target)) {
+      legChart.tooltip.setActiveElements([], { x: 0, y: 0 });
+      legChart.update();
+    }
+  }, { passive: true });
+}
+
+function renderLegTable() {
+  const tbody = document.getElementById('leg-table-body');
+
+  // Build joined rows: leg_logs left joined with leg_context
+  // context_date = log_date - 1 day
+  const ctxMap = {};
+  legContext.forEach(c => { ctxMap[c.context_date] = c; });
+
+  const rows = [...legLogs].reverse().slice(0, 30).map(l => {
+    // Find context for the day before this measurement
+    const prevDate = new Date(l.log_date + 'T12:00:00');
+    prevDate.setDate(prevDate.getDate() - 1);
+    const prevStr = prevDate.toISOString().split('T')[0];
+    const ctx = ctxMap[prevStr] || null;
+
+    // Weight trend: compare rolling avg for log_date vs day before
+    const todayAvg = getWeightAvgForDate(l.log_date);
+    const prevAvg  = getWeightAvgForDate(prevStr);
+    let trend = '—';
+    if (todayAvg != null && prevAvg != null) {
+      trend = todayAvg < prevAvg ? '↓' : todayAvg > prevAvg ? '↑' : '→';
+    }
+
+    return { log: l, ctx, prevStr, trend };
+  });
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="loading">No entries yet.</td></tr>';
+    return;
+  }
+
+  const activityLabel = s => s === 0 ? 'Good' : s === 1 ? 'Mixed' : 'Difficult';
+  const activityColor = s => s === 0 ? 'var(--accent)' : s === 1 ? 'var(--accent2)' : 'var(--danger)';
+
+  tbody.innerHTML = rows.map(({ log, ctx, prevStr, trend }) => {
+    const measDate = new Date(log.log_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const ctxDate  = new Date(prevStr + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const diff = (log.right_ankle - log.left_ankle).toFixed(2);
+    const diffColor = parseFloat(diff) > 1.5 ? 'var(--danger)' : parseFloat(diff) > 0.75 ? 'var(--accent2)' : 'var(--accent)';
+
+    const sockHtml = ctx != null
+      ? `<span style="color:${ctx.wore_sock === 1 ? 'var(--accent)' : 'var(--text3)'}">${ctx.wore_sock === 1 ? 'Yes' : 'No'}</span>`
+      : '—';
+    const actHtml = ctx != null
+      ? `<span style="color:${activityColor(ctx.activity_score)}">${activityLabel(ctx.activity_score)}</span>`
+      : '—';
+
+    return `<tr>
+      <td>${measDate}</td>
+      <td>${parseFloat(log.right_ankle).toFixed(2)}</td>
+      <td>${parseFloat(log.left_ankle).toFixed(2)}</td>
+      <td style="color:${diffColor}">${diff}</td>
+      <td>${trend}</td>
+      <td>${ctxDate}</td>
+      <td>${sockHtml}</td>
+      <td>${actHtml}</td>
+      <td style="text-align:left;color:var(--text2)">${ctx?.activity_notes || ''}</td>
+    </tr>`;
+  }).join('');
+}
+
+function getWeightAvgForDate(dateStr) {
+  // Calculate rolling avg from weight logs for a given date
+  const avgWindow = getVal('rolling_avg_days', 14);
+  const windowStart = new Date(dateStr + 'T12:00:00');
+  windowStart.setDate(windowStart.getDate() - avgWindow);
+  const windowStartStr = windowStart.toISOString().split('T')[0];
+
+  const inWindow = logs.filter(l => l.log_date >= windowStartStr && l.log_date <= dateStr);
+  if (!inWindow.length) return null;
+  return inWindow.reduce((s, l) => s + parseFloat(l.weight), 0) / inWindow.length;
 }
 
 // ── Toast ─────────────────────────────────────────────────
