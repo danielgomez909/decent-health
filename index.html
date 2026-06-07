@@ -1018,17 +1018,22 @@ async function loadLegData() {
   const from = new Date();
   from.setDate(from.getDate() - 74);
   const fromStr = from.toISOString().split('T')[0];
+  console.log('loadLegData from:', fromStr);
 
   const [logsRes, ctxRes] = await Promise.all([
     sb.from('leg_logs').select('*').gte('log_date', fromStr).order('log_date', { ascending: true }),
     sb.from('leg_context').select('*').gte('context_date', fromStr).order('context_date', { ascending: true })
   ]);
 
+  console.log('logsRes:', logsRes.data?.length, logsRes.error);
+  console.log('ctxRes:', ctxRes.data?.length, ctxRes.error);
+
   if (logsRes.error) { showToast('Error loading leg data', 'error'); return; }
   if (ctxRes.error)  { showToast('Error loading leg context', 'error'); return; }
 
-  legLogs    = logsRes.data || [];
-  legContext  = ctxRes.data  || [];
+  legLogs   = logsRes.data || [];
+  legContext = ctxRes.data  || [];
+  console.log('legLogs:', legLogs.length, 'legContext:', legContext.length);
 }
 
 async function saveLeg() {
