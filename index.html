@@ -441,6 +441,7 @@
             <div class="form-group">
               <label>A:</label>
               <select id="leg-activity" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:6px 10px;outline:none;width:100%">
+                <option value="">—</option>
                 <option value="0">0 — Good</option>
                 <option value="1">1 — Mixed</option>
                 <option value="2">2 — Difficult</option>
@@ -1040,7 +1041,8 @@ async function saveLeg() {
   const right    = parseFloat(document.getElementById('leg-right').value);
   const left     = parseFloat(document.getElementById('leg-left').value);
   const sock     = parseInt(document.getElementById('leg-sock').value);
-  const activity = parseInt(document.getElementById('leg-activity').value);
+  const activityRaw = document.getElementById('leg-activity').value;
+  const activity = activityRaw !== '' ? parseInt(activityRaw) : null;
   const notes    = document.getElementById('leg-notes').value.trim();
 
   if (!measDate) { showToast('Please select a measurement date', 'error'); return; }
@@ -1118,20 +1120,25 @@ function renderLegChart() {
   const rights  = dates.map(d => logMap[d] ? +parseFloat(logMap[d].right_ankle).toFixed(2) : null);
   const diffs   = dates.map(d => logMap[d] ? +(logMap[d].right_ankle - logMap[d].left_ankle).toFixed(2) : null);
 
-  // Y bounds
-  const allVals = [...rights, ...diffs].filter(v => v != null);
-  const yMin = allVals.length ? Math.min(...allVals) - 0.5 : 25;
-  const yMax = allVals.length ? Math.max(...allVals) + 0.5 : 32;
+  // Y bounds per axis
+  const rightVals = rights.filter(v => v != null);
+  const diffVals  = diffs.filter(v => v != null);
+  const yMinR = rightVals.length ? Math.min(...rightVals) - 0.5 : 25;
+  const yMaxR = rightVals.length ? Math.max(...rightVals) + 0.5 : 32;
+  const yMinD = diffVals.length  ? Math.min(...diffVals)  - 0.5 : 0;
+  const yMaxD = diffVals.length  ? Math.max(...diffVals)  + 0.5 : 5;
 
   // Activity background plugin
   const activityBgPlugin = {
     id: 'activityBg',
     beforeDraw(ch) {
-      const { ctx, scales: { x, y } } = ch;
+      const { ctx, scales: { x, yRight } } = ch;
+      if (!yRight) return;
       dates.forEach((d, i) => {
         const ctxData = ctxMap[d];
         if (!ctxData) return;
         const score = ctxData.activity_score;
+        if (score == null) return;
         const color = score === 0 ? 'rgba(74,222,128,0.12)'
                     : score === 1 ? 'rgba(245,158,11,0.12)'
                     : 'rgba(248,113,113,0.12)';
@@ -1139,7 +1146,7 @@ function renderLegChart() {
         const xEnd   = x.getPixelForValue(i + 0.5);
         ctx.save();
         ctx.fillStyle = color;
-        ctx.fillRect(xStart, y.top, xEnd - xStart, y.bottom - y.top);
+        ctx.fillRect(xStart, yRight.top, xEnd - xStart, yRight.bottom - yRight.top);
         ctx.restore();
       });
     }
@@ -1155,7 +1162,7 @@ function renderLegChart() {
         if (!ctxData) return;
         const color = ctxData.wore_sock === 1 ? '#4ade80' : '#5a5f7a';
         const xPos  = x.getPixelForValue(i);
-        const yPos  = y.bottom + 10;
+        const yPos  = ch.scales.yRight.bottom + 10;
         ctx.save();
         ctx.beginPath();
         ctx.arc(xPos, yPos, 3, 0, Math.PI * 2);
@@ -1175,7 +1182,7 @@ function renderLegChart() {
       const meta = ch.getDatasetMeta(0);
       if (!meta.data[todayMark]) return;
       const xPos = meta.data[todayMark].x;
-      const { top, bottom } = ch.scales.y;
+      const { top, bottom } = ch.scales.yRight;
       const c = ch.ctx;
       c.save();
       c.beginPath();
@@ -1205,6 +1212,7 @@ function renderLegChart() {
         {
           label: 'Right Ankle',
           data: rights,
+          yAxisID: 'yRight',
           borderColor: '#e8eaf0',
           backgroundColor: 'transparent',
           pointBackgroundColor: '#e8eaf0',
@@ -1217,6 +1225,7 @@ function renderLegChart() {
         {
           label: 'Difference (R−L)',
           data: diffs,
+          yAxisID: 'yDiff',
           borderColor: '#a78bfa',
           backgroundColor: 'transparent',
           pointBackgroundColor: '#a78bfa',
@@ -1271,11 +1280,23 @@ function renderLegChart() {
           grid: { color: '#2e3250' },
           ticks: { color: '#5a5f7a', font: { family: 'DM Sans', size: 11 } }
         },
-        y: {
-          min: yMin,
-          max: yMax,
+        yRight: {
+          type: 'linear',
+          position: 'left',
+          min: yMinR,
+          max: yMaxR,
           grid: { color: '#2e3250' },
-          ticks: { color: '#5a5f7a', font: { family: 'DM Sans', size: 11 }, callback: v => v.toFixed(1) }
+          ticks: { color: '#8b90a7', font: { family: 'DM Sans', size: 11 }, callback: v => v.toFixed(1) },
+          title: { display: true, text: 'R Ankle (cm)', color: '#8b90a7', font: { family: 'DM Sans', size: 10 } }
+        },
+        yDiff: {
+          type: 'linear',
+          position: 'right',
+          min: yMinD,
+          max: yMaxD,
+          grid: { drawOnChartArea: false },
+          ticks: { color: '#a78bfa', font: { family: 'DM Sans', size: 11 }, callback: v => v.toFixed(2) },
+          title: { display: true, text: 'Diff (cm)', color: '#a78bfa', font: { family: 'DM Sans', size: 10 } }
         }
       }
     }
@@ -1321,8 +1342,8 @@ function renderLegTable() {
     return;
   }
 
-  const activityLabel = s => s === 0 ? 'Good' : s === 1 ? 'Mixed' : 'Difficult';
-  const activityColor = s => s === 0 ? 'var(--accent)' : s === 1 ? 'var(--accent2)' : 'var(--danger)';
+  const activityLabel = s => s == null ? '—' : s === 0 ? 'Good' : s === 1 ? 'Mixed' : 'Difficult';
+  const activityColor = s => s == null ? 'var(--text3)' : s === 0 ? 'var(--accent)' : s === 1 ? 'var(--accent2)' : 'var(--danger)';
 
   tbody.innerHTML = rows.map(({ log, ctx, prevStr, trend }) => {
     const measDate = new Date(log.log_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
