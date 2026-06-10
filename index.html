@@ -9,16 +9,16 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --surface2: #22263a;
-    --border: #2e3250;
-    --accent: #4ade80;
-    --accent2: #f59e0b;
-    --danger: #f87171;
-    --text: #e8eaf0;
-    --text2: #8b90a7;
-    --text3: #5a5f7a;
+    --bg: #faf8f5;
+    --surface: #ffffff;
+    --surface2: #f3f0eb;
+    --border: #e8e0d8;
+    --accent: #c2623f;
+    --accent2: #d97706;
+    --danger: #dc2626;
+    --text: #2c2420;
+    --text2: #6b5e58;
+    --text3: #a8978f;
     --radius: 12px;
     --font-display: 'DM Serif Display', serif;
     --font-body: 'DM Sans', sans-serif;
@@ -245,8 +245,8 @@
     font-weight: 600;
   }
 
-  .streak-pos { background: rgba(74,222,128,0.15); color: var(--accent); }
-  .streak-neg { background: rgba(248,113,113,0.15); color: var(--danger); }
+  .streak-pos { background: rgba(194,98,63,0.12); color: var(--accent); }
+  .streak-neg { background: rgba(220,38,38,0.12); color: var(--danger); }
 
   .config-row {
     display: grid;
@@ -302,6 +302,16 @@
     padding: 40px;
     font-size: 13px;
   }
+
+  /* Hide number input arrows */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+
+  /* Leg form inline pairs */
+  .leg-inline { display:flex; gap:8px; align-items:center; }
+  .leg-inline label { min-width:20px; margin-bottom:0; }
+  .leg-inline input, .leg-inline select { flex:1; }
 </style>
 </head>
 <body>
@@ -321,17 +331,47 @@
   <div id="page-weight" class="page active">
 
     <div class="card">
-      <div class="card-title">Log Weight</div>
-      <div class="entry-form">
-        <div class="form-group">
-          <label>Date</label>
-          <input type="date" id="entry-date" />
-        </div>
-        <div class="form-group">
-          <label>Weight (lbs)</label>
-          <input type="number" id="entry-weight" step="0.1" min="100" max="500" placeholder="e.g. 238.5" style="width:140px" />
-        </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="card-title" style="margin-bottom:0">Log Weight</div>
         <button class="btn" onclick="saveWeight()">Save</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Today's Weight</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="entry-date" />
+            </div>
+            <div class="form-group">
+              <label>Wt (lbs)</label>
+              <input type="number" id="entry-weight" step="0.1" min="100" max="500" placeholder="238.5" style="-moz-appearance:textfield" />
+            </div>
+          </div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Yesterday's Context</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="ctx-date" />
+            </div>
+            <div class="form-group">
+              <label>F:</label>
+              <select id="ctx-food-score" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:6px 10px;outline:none;width:100%">
+                <option value="">—</option>
+                <option value="0">0 — Good</option>
+                <option value="1">1 — Some weakness</option>
+                <option value="2">2 — Poor day</option>
+                <option value="3">3 — Really bad</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>N:</label>
+              <input type="text" id="ctx-notes" placeholder="Optional notes" />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -388,6 +428,8 @@
               <th>Target</th>
               <th>vs Target</th>
               <th>Streak</th>
+              <th>Food</th>
+              <th style="text-align:left">Notes</th>
             </tr>
           </thead>
           <tbody id="weight-table-body">
@@ -407,49 +449,45 @@
         <button class="btn" onclick="saveLeg()">Save</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;min-width:0">
           <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Today's Measurements</div>
           <div style="display:flex;flex-direction:column;gap:6px">
             <div class="form-group">
               <label>Date</label>
-              <input type="date" id="leg-meas-date" />
+              <input type="date" id="leg-meas-date" style="width:100%" />
             </div>
-            <div class="form-group">
+            <div class="leg-inline">
               <label>R:</label>
               <input type="number" id="leg-right" step="0.25" min="20" max="60" placeholder="28.50" />
-            </div>
-            <div class="form-group">
               <label>L:</label>
               <input type="number" id="leg-left" step="0.25" min="20" max="60" placeholder="26.75" />
             </div>
           </div>
         </div>
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;min-width:0">
           <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Yesterday's Context</div>
           <div style="display:flex;flex-direction:column;gap:6px">
             <div class="form-group">
               <label>Date</label>
-              <input type="date" id="leg-ctx-date" />
+              <input type="date" id="leg-ctx-date" style="width:100%" />
             </div>
-            <div class="form-group">
+            <div class="leg-inline">
               <label>S:</label>
-              <select id="leg-sock" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:6px 10px;outline:none;width:100%">
+              <select id="leg-sock" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:6px 6px;outline:none;flex:1">
                 <option value="0">No</option>
                 <option value="1">Yes</option>
               </select>
-            </div>
-            <div class="form-group">
               <label>A:</label>
-              <select id="leg-activity" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:6px 10px;outline:none;width:100%">
+              <select id="leg-activity" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:6px 6px;outline:none;flex:1">
                 <option value="">—</option>
-                <option value="0">0 — Good</option>
-                <option value="1">1 — Mixed</option>
-                <option value="2">2 — Difficult</option>
+                <option value="0">Good</option>
+                <option value="1">Mixed</option>
+                <option value="2">Difficult</option>
               </select>
             </div>
-            <div class="form-group">
+            <div class="leg-inline">
               <label>N:</label>
-              <input type="text" id="leg-notes" placeholder="Optional notes" />
+              <input type="text" id="leg-notes" placeholder="Optional notes" style="flex:1" />
             </div>
           </div>
         </div>
@@ -480,8 +518,8 @@
         <canvas id="leg-chart"></canvas>
       </div>
       <div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--text3);flex-wrap:wrap">
-        <span>Background: <span style="color:#4ade80">■</span> Good activity &nbsp;<span style="color:#f59e0b">■</span> Mixed &nbsp;<span style="color:#f87171">■</span> Difficult</span>
-        <span>Dot below date: <span style="color:#4ade80">●</span> Sock worn &nbsp;<span style="color:#5a5f7a">●</span> No sock</span>
+        <span>Background: <span style="color:#c2623f">■</span> Good activity &nbsp;<span style="color:#d97706">■</span> Mixed &nbsp;<span style="color:#dc2626">■</span> Difficult</span>
+        <span>Dot below date: <span style="color:#c2623f">●</span> Sock worn &nbsp;<span style="color:#a8978f">●</span> No sock</span>
       </div>
     </div>
 
@@ -535,6 +573,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let config = {};
 let logs = [];
+let weightContext = [];
 let chart = null;
 
 // ── Init ──────────────────────────────────────────────────
@@ -549,6 +588,12 @@ function setDefaultDate() {
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('entry-date').value = today;
   document.getElementById('entry-date').max = today;
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yStr = yesterday.toISOString().split('T')[0];
+  const ctxEl = document.getElementById('ctx-date');
+  if (ctxEl) { ctxEl.value = yStr; ctxEl.max = today; }
 }
 
 // ── Config ────────────────────────────────────────────────
@@ -565,41 +610,60 @@ function getVal(key, fallback) {
 
 // ── Logs ──────────────────────────────────────────────────
 async function loadLogs() {
-  // Load last 30 days of data plus a buffer for rolling avg calculation
   const bufferDate = new Date();
-  bufferDate.setDate(bufferDate.getDate() - 74); // 60 days display + 14 day avg buffer
+  bufferDate.setDate(bufferDate.getDate() - 74);
   const fromDate = bufferDate.toISOString().split('T')[0];
 
-  const { data, error } = await sb
-    .from('weight_logs')
-    .select('*')
-    .gte('log_date', fromDate)
-    .order('log_date', { ascending: true });
-  if (error) { showToast('Error loading logs', 'error'); return; }
-  logs = data || [];
+  const [logsRes, ctxRes] = await Promise.all([
+    sb.from('weight_logs').select('log_date, weight').gte('log_date', fromDate).order('log_date', { ascending: true }),
+    sb.from('weight_context').select('*').gte('context_date', fromDate).order('context_date', { ascending: true })
+  ]);
+
+  if (logsRes.error) { showToast('Error loading logs', 'error'); return; }
+  if (ctxRes.error)  { showToast('Error loading weight context', 'error'); return; }
+  logs          = logsRes.data || [];
+  weightContext = ctxRes.data  || [];
 }
 
+
 async function saveWeight() {
-  const dateVal = document.getElementById('entry-date').value;
-  const wtVal   = parseFloat(document.getElementById('entry-weight').value);
+  const dateVal   = document.getElementById('entry-date').value;
+  const wtVal     = parseFloat(document.getElementById('entry-weight').value);
+  const ctxDate   = document.getElementById('ctx-date')?.value;
+  const foodScore = document.getElementById('ctx-food-score')?.value;
+  const foodNotes = document.getElementById('ctx-notes')?.value?.trim();
 
   if (!dateVal) { showToast('Please select a date', 'error'); return; }
   if (isNaN(wtVal) || wtVal < 100 || wtVal > 500) {
-    showToast('Please enter a valid weight (100–500)', 'error'); return;
+    showToast('Please enter a valid weight (100-500)', 'error'); return;
   }
 
-  const { error } = await sb.from('weight_logs').upsert(
-    { log_date: dateVal, weight: wtVal },
-    { onConflict: 'log_date' }
-  );
+  const saveOps = [
+    sb.from('weight_logs').upsert({ log_date: dateVal, weight: wtVal }, { onConflict: 'log_date' })
+  ];
 
-  if (error) { showToast('Error saving: ' + error.message, 'error'); return; }
+  if (ctxDate) {
+    saveOps.push(
+      sb.from('weight_context').upsert({
+        context_date: ctxDate,
+        food_score: foodScore !== '' && foodScore != null ? parseInt(foodScore) : null,
+        food_notes: foodNotes || null
+      }, { onConflict: 'context_date' })
+    );
+  }
 
-  showToast('Weight saved ✓', 'success');
+  const results = await Promise.all(saveOps);
+  const failed  = results.find(r => r.error);
+  if (failed) { showToast('Error: ' + failed.error.message, 'error'); return; }
+
+  showToast('Saved ✓', 'success');
   document.getElementById('entry-weight').value = '';
+  if (document.getElementById('ctx-food-score')) document.getElementById('ctx-food-score').value = '';
+  if (document.getElementById('ctx-notes')) document.getElementById('ctx-notes').value = '';
   await loadLogs();
   renderAll();
 }
+
 
 // ── Calculations ──────────────────────────────────────────
 function buildRows() {
@@ -793,7 +857,7 @@ function renderChart(rows) {
       const ctx = ch.ctx;
       ctx.save();
       ctx.beginPath();
-      ctx.strokeStyle = 'rgba(74,222,128,0.25)';
+      ctx.strokeStyle = 'rgba(194,98,63,0.4)';
       ctx.lineWidth = 1;
       ctx.setLineDash([4, 4]);
       ctx.moveTo(x, top);
@@ -820,9 +884,9 @@ function renderChart(rows) {
         {
           label: 'Weight',
           data: weights,
-          borderColor: '#e8eaf0',
-          backgroundColor: 'rgba(232,234,240,0.06)',
-          pointBackgroundColor: '#e8eaf0',
+          borderColor: '#2c2420',
+          backgroundColor: 'rgba(44,36,32,0.04)',
+          pointBackgroundColor: '#2c2420',
           pointRadius: 4,
           pointHoverRadius: 6,
           borderWidth: 2,
@@ -832,7 +896,7 @@ function renderChart(rows) {
         {
           label: 'Rolling Avg',
           data: avgs,
-          borderColor: '#4ade80',
+          borderColor: '#c2623f',
           backgroundColor: 'transparent',
           pointRadius: 0,
           borderWidth: 2,
@@ -862,18 +926,18 @@ function renderChart(rows) {
       plugins: {
         legend: {
           labels: {
-            color: '#8b90a7',
+            color: '#6b5e58',
             font: { family: 'DM Sans', size: 12 },
             boxWidth: 16,
             padding: 16,
           }
         },
         tooltip: {
-          backgroundColor: '#1a1d27',
-          borderColor: '#2e3250',
+          backgroundColor: '#ffffff',
+          borderColor: '#e8e0d8',
           borderWidth: 1,
-          titleColor: '#e8eaf0',
-          bodyColor: '#8b90a7',
+          titleColor: '#2c2420',
+          bodyColor: '#6b5e58',
           callbacks: {
             label: ctx => {
               const v = ctx.raw;
@@ -885,15 +949,15 @@ function renderChart(rows) {
       },
       scales: {
         x: {
-          grid: { color: '#2e3250' },
-          ticks: { color: '#5a5f7a', font: { family: 'DM Sans', size: 11 } }
+          grid: { color: '#e8e0d8' },
+          ticks: { color: '#a8978f', font: { family: 'DM Sans', size: 11 } }
         },
         y: {
           min: yMin,
           max: yMax,
-          grid: { color: '#2e3250' },
+          grid: { color: '#e8e0d8' },
           ticks: {
-            color: '#5a5f7a',
+            color: '#a8978f',
             font: { family: 'DM Sans', size: 11 },
             callback: v => v.toFixed(0)
           }
@@ -904,11 +968,16 @@ function renderChart(rows) {
 }
 
 function renderTable(rows) {
-  const withWeight = rows.filter(r => r.weight != null).slice().reverse().slice(0, 30);
+  const withWeight = rows
+    .filter(r => r.weight != null)
+    .slice()
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 30);
+
   const tbody = document.getElementById('weight-table-body');
 
   if (!withWeight.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="loading">No entries yet — log your first weight above.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="loading">No entries yet.</td></tr>';
     return;
   }
 
@@ -916,27 +985,37 @@ function renderTable(rows) {
   const fmtDiff = v => {
     if (v == null) return '<span class="neutral">—</span>';
     const cls = v <= 0 ? 'positive' : 'negative';
-    return `<span class="${cls}">${v > 0 ? '+' : ''}${v.toFixed(1)}</span>`;
+    return '<span class="' + cls + '">' + (v > 0 ? '+' : '') + v.toFixed(1) + '</span>';
   };
 
+  const foodLabel = s => s == null ? '—' : ['Good','Weak','Poor','Bad'][s] ?? s;
+  const foodColor = s => s == null ? 'var(--text3)' : s === 0 ? 'var(--accent)' : s === 1 ? 'var(--accent2)' : 'var(--danger)';
+
+  const ctxMap = {};
+  weightContext.forEach(c => { ctxMap[c.context_date] = c; });
+
   tbody.innerHTML = withWeight.map(r => {
-    const d = new Date(r.date + 'T00:00:00');
+    const d = new Date(r.date + 'T12:00:00');
     const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const streakHtml = r.streak != null
-      ? `<span class="streak-badge ${r.streak > 0 ? 'streak-pos' : 'streak-neg'}">${r.streak > 0 ? '+' : ''}${r.streak}</span>`
+      ? '<span class="streak-badge ' + (r.streak > 0 ? 'streak-pos' : 'streak-neg') + '">'
+        + (r.streak > 0 ? '+' : '') + r.streak + '</span>'
       : '—';
-
-    return `<tr>
-      <td>${dateStr}</td>
-      <td>${fmt(r.weight)}</td>
-      <td>${fmt(r.avg)}</td>
-      <td>${fmtDiff(r.vsAvg)}</td>
-      <td>${fmt(r.target)}</td>
-      <td>${fmtDiff(r.vsTarget)}</td>
-      <td>${streakHtml}</td>
-    </tr>`;
+    const prevDate = new Date(r.date + 'T12:00:00');
+    prevDate.setDate(prevDate.getDate() - 1);
+    const prevStr  = prevDate.toISOString().split('T')[0];
+    const ctx      = ctxMap[prevStr];
+    const foodHtml = ctx
+      ? '<span style="color:' + foodColor(ctx.food_score) + '">' + foodLabel(ctx.food_score) + '</span>'
+      : '—';
+    return '<tr><td>' + dateStr + '</td><td>' + fmt(r.weight) + '</td><td>'
+      + fmt(r.avg) + '</td><td>' + fmtDiff(r.vsAvg) + '</td><td>'
+      + fmt(r.target) + '</td><td>' + fmtDiff(r.vsTarget) + '</td><td>'
+      + streakHtml + '</td><td>' + foodHtml + '</td>'
+      + '<td style="text-align:left;color:var(--text2)">' + (ctx?.food_notes || '') + '</td></tr>';
   }).join('');
 }
+
 
 // ── Admin ─────────────────────────────────────────────────
 async function showPage(name, btn) {
@@ -1139,9 +1218,9 @@ function renderLegChart() {
         if (!ctxData) return;
         const score = ctxData.activity_score;
         if (score == null) return;
-        const color = score === 0 ? 'rgba(74,222,128,0.12)'
-                    : score === 1 ? 'rgba(245,158,11,0.12)'
-                    : 'rgba(248,113,113,0.12)';
+        const color = score === 0 ? 'rgba(194,98,63,0.08)'
+                    : score === 1 ? 'rgba(217,119,6,0.10)'
+                    : 'rgba(220,38,38,0.10)';
         const xStart = x.getPixelForValue(i - 0.5);
         const xEnd   = x.getPixelForValue(i + 0.5);
         ctx.save();
@@ -1160,7 +1239,7 @@ function renderLegChart() {
       dates.forEach((d, i) => {
         const ctxData = ctxMap[d];
         if (!ctxData) return;
-        const color = ctxData.wore_sock === 1 ? '#4ade80' : '#5a5f7a';
+        const color = ctxData.wore_sock === 1 ? '#c2623f' : '#a8978f';
         const xPos  = x.getPixelForValue(i);
         const yPos  = ch.scales.yRight.bottom + 10;
         ctx.save();
@@ -1186,7 +1265,7 @@ function renderLegChart() {
       const c = ch.ctx;
       c.save();
       c.beginPath();
-      c.strokeStyle = 'rgba(74,222,128,0.3)';
+      c.strokeStyle = 'rgba(194,98,63,0.4)';
       c.lineWidth = 1;
       c.setLineDash([4, 4]);
       c.moveTo(xPos, top);
@@ -1213,9 +1292,9 @@ function renderLegChart() {
           label: 'Right Ankle',
           data: rights,
           yAxisID: 'yRight',
-          borderColor: '#e8eaf0',
+          borderColor: '#2c2420',
           backgroundColor: 'transparent',
-          pointBackgroundColor: '#e8eaf0',
+          pointBackgroundColor: '#2c2420',
           pointRadius: 4,
           pointHoverRadius: 6,
           borderWidth: 2,
@@ -1246,14 +1325,14 @@ function renderLegChart() {
       events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
       plugins: {
         legend: {
-          labels: { color: '#8b90a7', font: { family: 'DM Sans', size: 12 }, boxWidth: 16, padding: 16 }
+          labels: { color: '#6b5e58', font: { family: 'DM Sans', size: 12 }, boxWidth: 16, padding: 16 }
         },
         tooltip: {
-          backgroundColor: '#1a1d27',
-          borderColor: '#2e3250',
+          backgroundColor: '#ffffff',
+          borderColor: '#e8e0d8',
           borderWidth: 1,
-          titleColor: '#e8eaf0',
-          bodyColor: '#8b90a7',
+          titleColor: '#2c2420',
+          bodyColor: '#6b5e58',
           callbacks: {
             label: ctx => {
               const v = ctx.raw;
@@ -1277,17 +1356,17 @@ function renderLegChart() {
       },
       scales: {
         x: {
-          grid: { color: '#2e3250' },
-          ticks: { color: '#5a5f7a', font: { family: 'DM Sans', size: 11 } }
+          grid: { color: '#e8e0d8' },
+          ticks: { color: '#a8978f', font: { family: 'DM Sans', size: 11 } }
         },
         yRight: {
           type: 'linear',
           position: 'left',
           min: yMinR,
           max: yMaxR,
-          grid: { color: '#2e3250' },
-          ticks: { color: '#8b90a7', font: { family: 'DM Sans', size: 11 }, callback: v => v.toFixed(1) },
-          title: { display: true, text: 'R Ankle (cm)', color: '#8b90a7', font: { family: 'DM Sans', size: 10 } }
+          grid: { color: '#e8e0d8' },
+          ticks: { color: '#6b5e58', font: { family: 'DM Sans', size: 11 }, callback: v => v.toFixed(1) },
+          title: { display: true, text: 'R Ankle (cm)', color: '#6b5e58', font: { family: 'DM Sans', size: 10 } }
         },
         yDiff: {
           type: 'linear',
