@@ -412,6 +412,9 @@
       <div class="chart-wrap">
         <canvas id="weight-chart"></canvas>
       </div>
+      <div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--text3);flex-wrap:wrap">
+        <span>Food: <span style="color:#22c55e">■</span> Good &nbsp;<span style="color:#eab308">■</span> Some weakness &nbsp;<span style="color:#f97316">■</span> Poor &nbsp;<span style="color:#dc2626">■</span> Really bad</span>
+      </div>
     </div>
 
     <div class="card">
@@ -517,7 +520,7 @@
         <canvas id="leg-chart"></canvas>
       </div>
       <div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--text3);flex-wrap:wrap">
-        <span>Background: <span style="color:#c2623f">■</span> Good activity &nbsp;<span style="color:#d97706">■</span> Mixed &nbsp;<span style="color:#dc2626">■</span> Difficult</span>
+        <span>Background: <span style="color:#22c55e">■</span> Good activity &nbsp;<span style="color:#eab308">■</span> Mixed &nbsp;<span style="color:#dc2626">■</span> Difficult</span>
         <span>Dot below date: <span style="color:#c2623f">●</span> Sock worn &nbsp;<span style="color:#a8978f">●</span> No sock</span>
       </div>
     </div>
@@ -845,6 +848,33 @@ function renderChart(rows) {
 
   if (chart) chart.destroy();
 
+  // Build food context map for chart shading
+  const weightCtxMap = {};
+  weightContext.forEach(c => { weightCtxMap[c.context_date] = c; });
+
+  const foodBgPlugin = {
+    id: 'foodBg',
+    beforeDraw(ch) {
+      const { ctx, scales: { x, y } } = ch;
+      if (!y) return;
+      chartSlice.forEach((r, i) => {
+        const c = weightCtxMap[r.date];
+        if (!c || c.food_score == null) return;
+        const score = c.food_score;
+        const color = score === 0 ? 'rgba(34,197,94,0.18)'
+                    : score === 1 ? 'rgba(234,179,8,0.22)'
+                    : score === 2 ? 'rgba(249,115,22,0.20)'
+                    : 'rgba(220,38,38,0.18)';
+        const xStart = x.getPixelForValue(i - 0.5);
+        const xEnd   = x.getPixelForValue(i + 0.5);
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.fillRect(xStart, y.top, xEnd - xStart, y.bottom - y.top);
+        ctx.restore();
+      });
+    }
+  };
+
   const todayLinePlugin = {
     id: 'todayLine',
     afterDraw(ch) {
@@ -915,7 +945,7 @@ function renderChart(rows) {
         }
       ]
     },
-    plugins: [todayLinePlugin],
+    plugins: [foodBgPlugin, todayLinePlugin],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -1217,9 +1247,9 @@ function renderLegChart() {
         if (!ctxData) return;
         const score = ctxData.activity_score;
         if (score == null) return;
-        const color = score === 0 ? 'rgba(194,98,63,0.08)'
-                    : score === 1 ? 'rgba(217,119,6,0.10)'
-                    : 'rgba(220,38,38,0.10)';
+        const color = score === 0 ? 'rgba(34,197,94,0.18)'
+                    : score === 1 ? 'rgba(234,179,8,0.22)'
+                    : 'rgba(220,38,38,0.18)';
         const xStart = x.getPixelForValue(i - 0.5);
         const xEnd   = x.getPixelForValue(i + 0.5);
         ctx.save();
