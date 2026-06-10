@@ -356,9 +356,9 @@
               <label>Date</label>
               <input type="date" id="ctx-date" />
             </div>
-            <div class="form-group">
+            <div class="leg-inline">
               <label>F:</label>
-              <select id="ctx-food-score" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:6px 10px;outline:none;width:100%">
+              <select id="ctx-food-score" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:6px 6px;outline:none;flex:1">
                 <option value="">—</option>
                 <option value="0">0 — Good</option>
                 <option value="1">1 — Some weakness</option>
@@ -366,42 +366,41 @@
                 <option value="3">3 — Really bad</option>
               </select>
             </div>
-            <div class="form-group">
+            <div class="leg-inline">
               <label>N:</label>
-              <input type="text" id="ctx-notes" placeholder="Optional notes" />
+              <input type="text" id="ctx-notes" placeholder="Optional notes" style="flex:1" />
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="stats-grid">
-      <div class="stat">
-        <div class="stat-label">Weight</div>
-        <div class="stat-value" id="stat-today">—</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:nowrap">
+      <div class="stat" style="flex:1;padding:6px 8px">
+        <div class="stat-label">Wgt</div>
+        <div class="stat-value" id="stat-today" style="font-size:16px">—</div>
         <div class="stat-sub" id="stat-today-date"></div>
       </div>
-      <div class="stat">
-        <div class="stat-label">Rolling Avg</div>
-        <div class="stat-value" id="stat-avg">—</div>
+      <div class="stat" style="flex:1;padding:6px 8px">
+        <div class="stat-label">RAvg</div>
+        <div class="stat-value" id="stat-avg" style="font-size:16px">—</div>
         <div class="stat-sub" id="stat-avg-sub"></div>
       </div>
-      <div class="stat">
-        <div class="stat-label">vs Average</div>
-        <div class="stat-value" id="stat-vs-avg">—</div>
+      <div class="stat" style="flex:1;padding:6px 8px">
+        <div class="stat-label">vAvg</div>
+        <div class="stat-value" id="stat-vs-avg" style="font-size:16px">—</div>
       </div>
-      <div class="stat">
-        <div class="stat-label">Target</div>
-        <div class="stat-value" id="stat-target">—</div>
+      <div class="stat" style="flex:1;padding:6px 8px">
+        <div class="stat-label">Tgt</div>
+        <div class="stat-value" id="stat-target" style="font-size:16px">—</div>
       </div>
-      <div class="stat">
-        <div class="stat-label">vs Target</div>
-        <div class="stat-value" id="stat-vs-target">—</div>
+      <div class="stat" style="flex:1;padding:6px 8px">
+        <div class="stat-label">vTgt</div>
+        <div class="stat-value" id="stat-vs-target" style="font-size:16px">—</div>
       </div>
-      <div class="stat">
-        <div class="stat-label">Streak</div>
-        <div class="stat-value" id="stat-streak">—</div>
-        <div class="stat-sub">vs rolling avg</div>
+      <div class="stat" style="flex:1;padding:6px 8px">
+        <div class="stat-label">Strk</div>
+        <div class="stat-value" id="stat-streak" style="font-size:16px">—</div>
       </div>
     </div>
 
