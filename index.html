@@ -303,6 +303,136 @@
     font-size: 13px;
   }
 
+  /* Habits */
+  .habit-group-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin: 14px 0 6px;
+  }
+
+  .habit-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .habit-row:hover { background: var(--surface2); }
+  .habit-row.completed { opacity: 0.65; }
+
+  .habit-check {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    transition: all 0.15s;
+  }
+
+  .habit-check.done {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .habit-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .habit-meta {
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .nudge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  .nudge-green  { background: rgba(34,197,94,0.15);  color: #16a34a; }
+  .nudge-amber  { background: rgba(234,179,8,0.18);   color: #b45309; }
+  .nudge-red    { background: rgba(220,38,38,0.15);   color: #dc2626; }
+  .nudge-purple { background: rgba(147,51,234,0.15);  color: #7c3aed; }
+
+  .weekly-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .weekly-pips {
+    display: flex;
+    gap: 3px;
+  }
+
+  .pip {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+
+  .pip.done { background: var(--accent); }
+
+  /* Admin subtabs */
+  .subtab-nav {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+
+  .subtab-btn {
+    background: none;
+    border: none;
+    color: var(--text3);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .subtab-btn:hover { background: var(--surface2); color: var(--text); }
+  .subtab-btn.active { background: var(--surface2); color: var(--accent); }
+
+  .subtab-panel { display: none; }
+  .subtab-panel.active { display: block; }
+
+  /* Milestone badge */
+  .milestone {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(194,98,63,0.12);
+    color: var(--accent);
+    margin-left: 6px;
+  }
+
   /* Hide number input arrows */
   input[type="number"]::-webkit-outer-spin-button,
   input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -321,6 +451,7 @@
   <nav class="nav">
     <button class="nav-btn active" data-page="weight" onclick="showPage('weight', this)">Weight</button>
     <button class="nav-btn" data-page="leg" onclick="showPage('leg', this)">Leg</button>
+    <button class="nav-btn" data-page="habits" onclick="showPage('habits', this)">Habits</button>
     <button class="nav-btn" data-page="admin" onclick="showPage('admin', this)">Admin</button>
   </nav>
 </header>
@@ -550,16 +681,104 @@
     </div>
   </div>
 
+  <!-- HABITS PAGE -->
+  <div id="page-habits" class="page">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div style="font-family:var(--font-display);font-size:18px;color:var(--text)">Today's Habits</div>
+      <div style="font-size:12px;color:var(--text3)" id="habits-date-label"></div>
+    </div>
+
+    <!-- Daily habits -->
+    <div id="daily-habits-section">
+      <div class="habit-group-title">Daily</div>
+      <div id="daily-habits-list"><div class="loading">Loading…</div></div>
+    </div>
+
+    <!-- Weekly habits -->
+    <div id="weekly-habits-section" style="margin-top:8px">
+      <div class="habit-group-title">Weekly</div>
+      <div id="weekly-habits-list"><div class="loading">Loading…</div></div>
+    </div>
+
+    <!-- Progress review -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">Streaks & Progress</div>
+      <div id="habits-streaks-list"><div class="loading">Loading…</div></div>
+    </div>
+
+  </div>
+
   <!-- ADMIN PAGE -->
   <div id="page-admin" class="page">
     <div class="card">
-      <div class="card-title">App Configuration</div>
-      <div id="config-grid">
-        <div class="loading">Loading…</div>
+      <div class="subtab-nav">
+        <button class="subtab-btn active" onclick="showSubtab('config', this)">Config</button>
+        <button class="subtab-btn" onclick="showSubtab('habit-admin', this)">Habits</button>
+        <button class="subtab-btn" onclick="showSubtab('categories', this)">Categories</button>
       </div>
-      <div style="margin-top:20px">
-        <button class="btn" onclick="saveConfig()">Save Changes</button>
-        <div class="save-msg" id="save-msg">✓ Configuration saved</div>
+
+      <!-- Config subtab -->
+      <div id="subtab-config" class="subtab-panel active">
+        <div class="card-title">App Configuration</div>
+        <div id="config-grid"><div class="loading">Loading…</div></div>
+        <div style="margin-top:20px">
+          <button class="btn" onclick="saveConfig()">Save Changes</button>
+          <div class="save-msg" id="save-msg">✓ Configuration saved</div>
+        </div>
+      </div>
+
+      <!-- Habits admin subtab -->
+      <div id="subtab-habit-admin" class="subtab-panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="card-title" style="margin-bottom:0">Habits</div>
+          <button class="btn" onclick="showHabitForm()">+ Add</button>
+        </div>
+        <div id="habit-admin-list"><div class="loading">Loading…</div></div>
+
+        <!-- Habit form (hidden by default) -->
+        <div id="habit-form" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px" id="habit-form-title">Add Habit</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="form-group">
+              <label>Name</label>
+              <input type="text" id="hf-name" placeholder="e.g. Practice Guitar" />
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <select id="hf-category" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:6px 10px;outline:none;width:100%">
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <textarea id="hf-description" rows="3" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:6px 10px;outline:none;width:100%;resize:vertical" placeholder="Optional description, links, notes"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Frequency</label>
+              <select id="hf-frequency" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:6px 10px;outline:none;width:100%" onchange="toggleWeeklyTarget()">
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+              </select>
+            </div>
+            <div class="form-group" id="weekly-target-group" style="display:none">
+              <label>Times per week</label>
+              <input type="number" id="hf-weekly-target" min="1" max="7" placeholder="e.g. 3" style="width:100px" />
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn" onclick="saveHabit()">Save</button>
+              <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text)" onclick="hideHabitForm()">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories subtab -->
+      <div id="subtab-categories" class="subtab-panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="card-title" style="margin-bottom:0">Categories</div>
+          <button class="btn" onclick="addCategory()">+ Add</button>
+        </div>
+        <div id="category-list"><div class="loading">Loading…</div></div>
       </div>
     </div>
   </div>
@@ -1052,8 +1271,9 @@ async function showPage(name, btn) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'admin') { await loadConfig(); renderAdmin(); }
-  if (name === 'leg')   { setDefaultLegDates(); await loadLegData(); renderLeg(); }
+  if (name === 'admin')  { await loadConfig(); renderAdmin(); }
+  if (name === 'leg')    { setDefaultLegDates(); await loadLegData(); renderLeg(); }
+  if (name === 'habits') { await loadHabitsData(); await loadHabitStreakLogs(); renderHabits(); }
 }
 
 function renderAdmin() {
@@ -1490,6 +1710,435 @@ function getWeightAvgForDate(dateStr) {
   const inWindow = logs.filter(l => l.log_date >= windowStartStr && l.log_date <= dateStr);
   if (!inWindow.length) return null;
   return inWindow.reduce((s, l) => s + parseFloat(l.weight), 0) / inWindow.length;
+}
+
+// ── Habits ───────────────────────────────────────
+let habits      = [];
+let habitCats   = [];
+let habitLogs   = [];
+let editingHabitId = null;
+
+// Week helpers (Mon-Sun)
+function getWeekStart(date) {
+  const d = new Date(date + 'T12:00:00');
+  const day = d.getDay(); // 0=Sun,1=Mon,...
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().split('T')[0];
+}
+
+function getWeekEnd(weekStart) {
+  const d = new Date(weekStart + 'T12:00:00');
+  d.setDate(d.getDate() + 6);
+  return d.toISOString().split('T')[0];
+}
+
+function getDaysRemainingInWeek(weekStart) {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const end = new Date(getWeekEnd(weekStart) + 'T12:00:00');
+  const diff = Math.round((end - today) / 86400000) + 1;
+  return Math.max(0, diff);
+}
+
+async function loadHabitsData() {
+  const [habitsRes, catsRes, logsRes] = await Promise.all([
+    sb.from('habits').select('*').order('name'),
+    sb.from('habit_categories').select('*').order('name'),
+    sb.from('habit_logs').select('*').gte('log_date', getWeekStart(new Date().toISOString().split('T')[0]))
+      .order('log_date', { ascending: false })
+  ]);
+
+  if (habitsRes.error) { showToast('Error loading habits', 'error'); return; }
+  if (catsRes.error)   { showToast('Error loading categories', 'error'); return; }
+  if (logsRes.error)   { showToast('Error loading habit logs', 'error'); return; }
+
+  habits    = habitsRes.data || [];
+  habitCats = catsRes.data   || [];
+  habitLogs = logsRes.data   || [];
+}
+
+async function loadHabitStreakLogs() {
+  // Load last 90 days for streak calculation
+  const from = new Date();
+  from.setDate(from.getDate() - 90);
+  const fromStr = from.toISOString().split('T')[0];
+  const { data, error } = await sb.from('habit_logs').select('*').gte('log_date', fromStr);
+  if (!error) habitLogs = data || [];
+}
+
+function renderHabits() {
+  const today = new Date().toISOString().split('T')[0];
+  const weekStart = getWeekStart(today);
+  const weekEnd   = getWeekEnd(weekStart);
+
+  document.getElementById('habits-date-label').textContent =
+    new Date(today + 'T12:00:00').toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+
+  const activeHabits = habits.filter(h => h.is_active);
+  const catMap = {};
+  habitCats.forEach(c => { catMap[c.id] = c.name; });
+
+  // Group by category
+  const byCategory = {};
+  activeHabits.forEach(h => {
+    const cat = catMap[h.category_id] || 'Uncategorized';
+    if (!byCategory[cat]) byCategory[cat] = [];
+    byCategory[cat].push(h);
+  });
+
+  // Today's log set
+  const todayLogs = new Set(habitLogs.filter(l => l.log_date === today).map(l => l.habit_id));
+
+  // This week's logs per habit
+  const weekLogCounts = {};
+  habitLogs.filter(l => l.log_date >= weekStart && l.log_date <= weekEnd).forEach(l => {
+    weekLogCounts[l.habit_id] = (weekLogCounts[l.habit_id] || 0) + 1;
+  });
+
+  const daysLeft = getDaysRemainingInWeek(weekStart);
+
+  // Render daily
+  const dailyHabits = activeHabits.filter(h => h.frequency_type === 'daily');
+  renderHabitGroup('daily-habits-list', dailyHabits, byCategory, todayLogs, weekLogCounts, daysLeft, today, catMap, 'daily');
+
+  // Render weekly
+  const weeklyHabits = activeHabits.filter(h => h.frequency_type === 'weekly');
+  renderHabitGroup('weekly-habits-list', weeklyHabits, byCategory, todayLogs, weekLogCounts, daysLeft, today, catMap, 'weekly');
+
+  // Render streaks
+  renderHabitStreaks(activeHabits, catMap, today, weekStart, weekEnd);
+}
+
+function renderHabitGroup(containerId, filteredHabits, byCategory, todayLogs, weekLogCounts, daysLeft, today, catMap, type) {
+  const el = document.getElementById(containerId);
+  if (!filteredHabits.length) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px 0">No ' + type + ' habits yet.</div>';
+    return;
+  }
+
+  // Sort by category then name
+  const sorted = [...filteredHabits].sort((a, b) => {
+    const ca = catMap[a.category_id] || 'Z';
+    const cb = catMap[b.category_id] || 'Z';
+    return ca.localeCompare(cb) || a.name.localeCompare(b.name);
+  });
+
+  // Group by category
+  const groups = {};
+  sorted.forEach(h => {
+    const cat = catMap[h.category_id] || 'Uncategorized';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(h);
+  });
+
+  let html = '';
+  Object.entries(groups).forEach(([cat, habits]) => {
+    html += '<div class="habit-group-title">' + cat + '</div>';
+    habits.forEach(h => {
+      if (h.frequency_type === 'daily') {
+        const done = todayLogs.has(h.id);
+        html += `<div class="habit-row ${done ? 'completed' : ''}" onclick="toggleHabitLog('${h.id}', '${today}', this)">
+          <div class="habit-check ${done ? 'done' : ''}">${done ? '✓' : ''}</div>
+          <div class="habit-name">${h.name}</div>
+        </div>`;
+      } else {
+        const count  = weekLogCounts[h.id] || 0;
+        const target = h.weekly_target || 1;
+        const remaining = Math.max(0, target - count);
+        const nudge = getNudgeClass(remaining, daysLeft);
+        const nudgeLabel = remaining === 0 ? '✓ Done' : remaining + ' left';
+
+        // Pips
+        let pips = '';
+        for (let i = 0; i < target; i++) {
+          pips += `<div class="pip ${i < count ? 'done' : ''}"></div>`;
+        }
+
+        html += `<div class="habit-row" onclick="logWeeklyHabit('${h.id}', '${today}')">
+          <div class="habit-name">${h.name}</div>
+          <div class="weekly-progress">
+            <div class="weekly-pips">${pips}</div>
+            <span class="nudge ${nudge}">${nudgeLabel}</span>
+          </div>
+        </div>`;
+      }
+    });
+  });
+
+  el.innerHTML = html;
+}
+
+function getNudgeClass(remaining, daysLeft) {
+  if (remaining === 0) return 'nudge-green';
+  if (daysLeft < remaining) return 'nudge-purple';
+  if (daysLeft === remaining) return 'nudge-red';
+  if (daysLeft === remaining + 1) return 'nudge-amber';
+  return 'nudge-green';
+}
+
+async function toggleHabitLog(habitId, date, rowEl) {
+  const logEntry = habitLogs.find(l => l.habit_id === habitId && l.log_date === date);
+
+  if (logEntry) {
+    // Remove log
+    const { error } = await sb.from('habit_logs').delete().eq('id', logEntry.id);
+    if (error) { showToast('Error removing log', 'error'); return; }
+    habitLogs = habitLogs.filter(l => l.id !== logEntry.id);
+  } else {
+    // Add log
+    const { data, error } = await sb.from('habit_logs')
+      .insert({ habit_id: habitId, log_date: date })
+      .select().single();
+    if (error) { showToast('Error logging habit', 'error'); return; }
+    habitLogs.push(data);
+    checkMilestone(habitId, date);
+  }
+
+  renderHabits();
+}
+
+async function logWeeklyHabit(habitId, date) {
+  // Check if already logged today
+  const todayLog = habitLogs.find(l => l.habit_id === habitId && l.log_date === date);
+  if (todayLog) {
+    showToast('Already logged today — tap to undo or use edit', 'error');
+    return;
+  }
+  const { data, error } = await sb.from('habit_logs')
+    .insert({ habit_id: habitId, log_date: date })
+    .select().single();
+  if (error) { showToast('Error logging habit', 'error'); return; }
+  habitLogs.push(data);
+  checkMilestone(habitId, date);
+  renderHabits();
+}
+
+function checkMilestone(habitId, date) {
+  const habit = habits.find(h => h.id === habitId);
+  if (!habit) return;
+
+  if (habit.frequency_type === 'daily') {
+    const streak = calcDailyStreak(habitId, date);
+    const milestones = [7, 14, 21, 30, 60, 90, 180, 365];
+    if (milestones.includes(streak)) {
+      showToast('🎉 ' + streak + '-day streak on "' + habit.name + '"!', 'success');
+    }
+  } else {
+    const weekStreak = calcWeeklyStreak(habitId, date);
+    const milestones = [4, 8, 12, 26, 52];
+    if (milestones.includes(weekStreak)) {
+      showToast('🎉 ' + weekStreak + '-week streak on "' + habit.name + '"!', 'success');
+    }
+  }
+}
+
+function calcDailyStreak(habitId, asOfDate) {
+  const logDates = new Set(habitLogs.filter(l => l.habit_id === habitId).map(l => l.log_date));
+  let streak = 0;
+  const cur = new Date(asOfDate + 'T12:00:00');
+  while (true) {
+    const ds = cur.toISOString().split('T')[0];
+    if (logDates.has(ds)) { streak++; cur.setDate(cur.getDate() - 1); }
+    else break;
+  }
+  return streak;
+}
+
+function calcWeeklyStreak(habitId, asOfDate) {
+  const logs = habitLogs.filter(l => l.habit_id === habitId);
+  const habit = habits.find(h => h.id === habitId);
+  if (!habit) return 0;
+  const target = habit.weekly_target || 1;
+
+  let streak = 0;
+  let weekStart = getWeekStart(asOfDate);
+
+  for (let i = 0; i < 52; i++) {
+    const weekEnd = getWeekEnd(weekStart);
+    const count = logs.filter(l => l.log_date >= weekStart && l.log_date <= weekEnd).length;
+    if (count >= target) { streak++; }
+    else break;
+    const prev = new Date(weekStart + 'T12:00:00');
+    prev.setDate(prev.getDate() - 7);
+    weekStart = prev.toISOString().split('T')[0];
+  }
+  return streak;
+}
+
+function renderHabitStreaks(activeHabits, catMap, today, weekStart, weekEnd) {
+  const el = document.getElementById('habits-streaks-list');
+  if (!activeHabits.length) { el.innerHTML = '<div class="loading">No habits yet.</div>'; return; }
+
+  const sorted = [...activeHabits].sort((a, b) => {
+    const ca = catMap[a.category_id] || 'Z';
+    const cb = catMap[b.category_id] || 'Z';
+    return ca.localeCompare(cb) || a.name.localeCompare(b.name);
+  });
+
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:13px">';
+  html += '<thead><tr>';
+  html += '<th style="text-align:left;padding:6px 8px;color:var(--text3);font-size:11px;border-bottom:1px solid var(--border)">Habit</th>';
+  html += '<th style="text-align:left;padding:6px 8px;color:var(--text3);font-size:11px;border-bottom:1px solid var(--border)">Type</th>';
+  html += '<th style="text-align:right;padding:6px 8px;color:var(--text3);font-size:11px;border-bottom:1px solid var(--border)">Streak</th>';
+  html += '<th style="text-align:right;padding:6px 8px;color:var(--text3);font-size:11px;border-bottom:1px solid var(--border)">This Week</th>';
+  html += '</tr></thead><tbody>';
+
+  sorted.forEach(h => {
+    const streak = h.frequency_type === 'daily'
+      ? calcDailyStreak(h.id, today) + 'd'
+      : calcWeeklyStreak(h.id, today) + 'wk';
+
+    const weekCount  = habitLogs.filter(l => l.habit_id === h.id && l.log_date >= weekStart && l.log_date <= weekEnd).length;
+    const weekTarget = h.frequency_type === 'daily' ? 7 : (h.weekly_target || 1);
+    const weekStr    = weekCount + ' / ' + weekTarget;
+
+    html += `<tr>
+      <td style="padding:8px;color:var(--text);border-bottom:1px solid var(--border)">${h.name}</td>
+      <td style="padding:8px;color:var(--text3);border-bottom:1px solid var(--border)">${h.frequency_type}</td>
+      <td style="padding:8px;text-align:right;color:var(--accent);font-weight:600;border-bottom:1px solid var(--border)">${streak}</td>
+      <td style="padding:8px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">${weekStr}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+// ── Admin: Habits ────────────────────────────────
+function showSubtab(name, btn) {
+  document.querySelectorAll('.subtab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('subtab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'habit-admin') renderHabitAdmin();
+  if (name === 'categories') renderCategoryAdmin();
+}
+
+function toggleWeeklyTarget() {
+  const freq = document.getElementById('hf-frequency').value;
+  document.getElementById('weekly-target-group').style.display = freq === 'weekly' ? 'block' : 'none';
+}
+
+function showHabitForm(habit) {
+  editingHabitId = habit ? habit.id : null;
+  document.getElementById('habit-form-title').textContent = habit ? 'Edit Habit' : 'Add Habit';
+  document.getElementById('hf-name').value = habit?.name || '';
+  document.getElementById('hf-description').value = habit?.description || '';
+  document.getElementById('hf-frequency').value = habit?.frequency_type || 'daily';
+  document.getElementById('hf-weekly-target').value = habit?.weekly_target || '';
+  toggleWeeklyTarget();
+
+  // Populate category dropdown
+  const sel = document.getElementById('hf-category');
+  sel.innerHTML = habitCats.map(c =>
+    `<option value="${c.id}" ${habit?.category_id === c.id ? 'selected' : ''}>${c.name}</option>`
+  ).join('');
+
+  document.getElementById('habit-form').style.display = 'block';
+}
+
+function hideHabitForm() {
+  document.getElementById('habit-form').style.display = 'none';
+  editingHabitId = null;
+}
+
+async function saveHabit() {
+  const name     = document.getElementById('hf-name').value.trim();
+  const catId    = document.getElementById('hf-category').value;
+  const desc     = document.getElementById('hf-description').value.trim();
+  const freq     = document.getElementById('hf-frequency').value;
+  const wtRaw    = document.getElementById('hf-weekly-target').value;
+  const wt       = freq === 'weekly' ? (parseInt(wtRaw) || 1) : null;
+
+  if (!name) { showToast('Name is required', 'error'); return; }
+
+  const payload = { name, category_id: catId, description: desc || null, frequency_type: freq, weekly_target: wt };
+
+  let error;
+  if (editingHabitId) {
+    ({ error } = await sb.from('habits').update(payload).eq('id', editingHabitId));
+  } else {
+    ({ error } = await sb.from('habits').insert(payload));
+  }
+
+  if (error) { showToast('Error saving habit', 'error'); return; }
+  showToast('Habit saved ✓', 'success');
+  hideHabitForm();
+  await loadHabitsData();
+  renderHabitAdmin();
+}
+
+async function archiveHabit(id, currentState) {
+  const { error } = await sb.from('habits').update({ is_active: !currentState }).eq('id', id);
+  if (error) { showToast('Error updating habit', 'error'); return; }
+  await loadHabitsData();
+  renderHabitAdmin();
+}
+
+async function deleteHabit(id, name) {
+  if (!confirm('Delete "' + name + '"? This cannot be undone.')) return;
+  const { error } = await sb.from('habits').delete().eq('id', id);
+  if (error) { showToast('Error deleting habit', 'error'); return; }
+  await loadHabitsData();
+  renderHabitAdmin();
+}
+
+function renderHabitAdmin() {
+  const el = document.getElementById('habit-admin-list');
+  const catMap = {};
+  habitCats.forEach(c => { catMap[c.id] = c.name; });
+
+  const sorted = [...habits].sort((a, b) => {
+    const ca = catMap[a.category_id] || 'Z';
+    const cb = catMap[b.category_id] || 'Z';
+    return ca.localeCompare(cb) || a.name.localeCompare(b.name);
+  });
+
+  if (!sorted.length) { el.innerHTML = '<div style="color:var(--text3);font-size:13px">No habits yet.</div>'; return; }
+
+  el.innerHTML = sorted.map(h => `
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500;color:${h.is_active ? 'var(--text)' : 'var(--text3)'}">${h.name}</div>
+        <div style="font-size:11px;color:var(--text3)">${catMap[h.category_id] || ''} · ${h.frequency_type}${h.weekly_target ? ' · ' + h.weekly_target + 'x/wk' : ''}</div>
+      </div>
+      <button onclick="showHabitForm(habits.find(x=>x.id==='${h.id}'))" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--text2)">Edit</button>
+      <button onclick="archiveHabit('${h.id}', ${h.is_active})" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--text2)">${h.is_active ? 'Archive' : 'Restore'}</button>
+      <button onclick="deleteHabit('${h.id}', '${h.name.replace(/'/g, "\\'")}')" style="background:none;border:1px solid var(--danger);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--danger)">Del</button>
+    </div>
+  `).join('');
+}
+
+// ── Admin: Categories ────────────────────────────
+async function addCategory() {
+  const name = prompt('Category name:');
+  if (!name?.trim()) return;
+  const { error } = await sb.from('habit_categories').insert({ name: name.trim() });
+  if (error) { showToast('Error adding category', 'error'); return; }
+  await loadHabitsData();
+  renderCategoryAdmin();
+}
+
+async function renameCategory(id, currentName) {
+  const name = prompt('Rename category:', currentName);
+  if (!name?.trim() || name.trim() === currentName) return;
+  const { error } = await sb.from('habit_categories').update({ name: name.trim() }).eq('id', id);
+  if (error) { showToast('Error renaming category', 'error'); return; }
+  await loadHabitsData();
+  renderCategoryAdmin();
+}
+
+function renderCategoryAdmin() {
+  const el = document.getElementById('category-list');
+  if (!habitCats.length) { el.innerHTML = '<div style="color:var(--text3);font-size:13px">No categories yet.</div>'; return; }
+
+  el.innerHTML = habitCats.map(c => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:14px;color:var(--text)">${c.name}</div>
+      <button onclick="renameCategory('${c.id}', '${c.name.replace(/'/g, "\\'")}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--text2)">Rename</button>
+    </div>
+  `).join('');
 }
 
 // ── Toast ─────────────────────────────────────────────────
