@@ -1843,11 +1843,12 @@ function renderHabitGroup(containerId, filteredHabits, byCategory, todayLogs, we
           <div class="habit-name">${h.name}</div>
         </div>`;
       } else {
-        const count  = weekLogCounts[h.id] || 0;
-        const target = h.weekly_target || 1;
+        const count     = weekLogCounts[h.id] || 0;
+        const target    = h.weekly_target || 1;
         const remaining = Math.max(0, target - count);
-        const nudge = getNudgeClass(remaining, daysLeft);
+        const nudge     = getNudgeClass(remaining, daysLeft);
         const nudgeLabel = remaining === 0 ? '✓ Done' : remaining + ' left';
+        const loggedToday = todayLogs.has(h.id);
 
         // Pips
         let pips = '';
@@ -1855,7 +1856,8 @@ function renderHabitGroup(containerId, filteredHabits, byCategory, todayLogs, we
           pips += `<div class="pip ${i < count ? 'done' : ''}"></div>`;
         }
 
-        html += `<div class="habit-row" onclick="logWeeklyHabit('${h.id}', '${today}')">
+        html += `<div class="habit-row ${loggedToday ? 'completed' : ''}" onclick="toggleHabitLog('${h.id}', '${today}', this)">
+          <div class="habit-check ${loggedToday ? 'done' : ''}">${loggedToday ? '✓' : ''}</div>
           <div class="habit-name">${h.name}</div>
           <div class="weekly-progress">
             <div class="weekly-pips">${pips}</div>
@@ -1898,21 +1900,7 @@ async function toggleHabitLog(habitId, date, rowEl) {
   renderHabits();
 }
 
-async function logWeeklyHabit(habitId, date) {
-  // Check if already logged today
-  const todayLog = habitLogs.find(l => l.habit_id === habitId && l.log_date === date);
-  if (todayLog) {
-    showToast('Already logged today — tap to undo or use edit', 'error');
-    return;
-  }
-  const { data, error } = await sb.from('habit_logs')
-    .insert({ habit_id: habitId, log_date: date })
-    .select().single();
-  if (error) { showToast('Error logging habit', 'error'); return; }
-  habitLogs.push(data);
-  checkMilestone(habitId, date);
-  renderHabits();
-}
+// logWeeklyHabit replaced by toggleHabitLog
 
 function checkMilestone(habitId, date) {
   const habit = habits.find(h => h.id === habitId);
