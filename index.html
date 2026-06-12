@@ -1271,7 +1271,7 @@ async function showPage(name, btn) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'admin')  { await loadConfig(); renderAdmin(); }
+  if (name === 'admin')  { await loadConfig(); await loadHabitsData(); renderAdmin(); }
   if (name === 'leg')    { setDefaultLegDates(); await loadLegData(); renderLeg(); }
   if (name === 'habits') { await loadHabitsData(); await loadHabitStreakLogs(); renderHabits(); }
 }
@@ -2006,13 +2006,13 @@ function renderHabitStreaks(activeHabits, catMap, today, weekStart, weekEnd) {
 }
 
 // ── Admin: Habits ────────────────────────────────
-function showSubtab(name, btn) {
+async function showSubtab(name, btn) {
   document.querySelectorAll('.subtab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('subtab-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'habit-admin') renderHabitAdmin();
-  if (name === 'categories') renderCategoryAdmin();
+  if (name === 'habit-admin') { await loadHabitsData(); renderHabitAdmin(); }
+  if (name === 'categories')  { await loadHabitsData(); renderCategoryAdmin(); }
 }
 
 function toggleWeeklyTarget() {
