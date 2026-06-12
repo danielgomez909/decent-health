@@ -1946,32 +1946,49 @@ function attachHabitRowEvents(container) {
   container.querySelectorAll('.habit-row').forEach(row => {
     const habitId = row.dataset.habitId;
     const today   = row.dataset.today;
-    let holdTimer = null;
+    let holdTimer  = null;
+    let didHold    = false;
+    let touchActive = false;
 
-    const startHold = () => {
+    // Touch events (mobile)
+    row.addEventListener('touchstart', e => {
+      touchActive = true;
+      didHold = false;
       holdTimer = setTimeout(() => {
-        holdTimer = null;
+        didHold = true;
         showHabitDesc(habitId);
       }, 500);
-    };
+    }, { passive: true });
 
-    const cancelHold = () => {
+    row.addEventListener('touchmove', () => {
       if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-    };
+    }, { passive: true });
 
-    const handleTap = () => {
-      if (holdTimer) {
-        cancelHold();
-        toggleHabitLog(habitId, today, row);
-      }
-    };
+    row.addEventListener('touchend', () => {
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+      if (!didHold) toggleHabitLog(habitId, today, row);
+      setTimeout(() => { touchActive = false; }, 300);
+    });
 
-    row.addEventListener('touchstart', startHold, { passive: true });
-    row.addEventListener('touchend', handleTap);
-    row.addEventListener('touchmove', cancelHold, { passive: true });
-    row.addEventListener('mousedown', startHold);
-    row.addEventListener('mouseup', handleTap);
-    row.addEventListener('mouseleave', cancelHold);
+    // Mouse events (desktop) — skip if touch already handled it
+    row.addEventListener('mousedown', () => {
+      if (touchActive) return;
+      didHold = false;
+      holdTimer = setTimeout(() => {
+        didHold = true;
+        showHabitDesc(habitId);
+      }, 500);
+    });
+
+    row.addEventListener('mouseup', () => {
+      if (touchActive) return;
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+      if (!didHold) toggleHabitLog(habitId, today, row);
+    });
+
+    row.addEventListener('mouseleave', () => {
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+    });
   });
 }
 
