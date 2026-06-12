@@ -421,6 +421,66 @@
   .subtab-panel { display: none; }
   .subtab-panel.active { display: block; }
 
+  /* Description modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(44,36,32,0.4);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 8px 32px rgba(44,36,32,0.15);
+  }
+
+  .modal-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .modal-cat {
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 14px;
+  }
+
+  .modal-desc {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+
+  .modal-close {
+    margin-top: 16px;
+    width: 100%;
+    text-align: center;
+    padding: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--text2);
+  }
+
   /* Milestone badge */
   .milestone {
     display: inline-block;
@@ -783,6 +843,16 @@
     </div>
   </div>
 
+</div>
+
+<!-- Description modal -->
+<div class="modal-overlay" id="habit-modal" onclick="closeHabitModal(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-habit-name"></div>
+    <div class="modal-cat" id="modal-habit-cat"></div>
+    <div class="modal-desc" id="modal-habit-desc"></div>
+    <button class="modal-close" onclick="document.getElementById('habit-modal').classList.remove('show')">Close</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1838,7 +1908,7 @@ function renderHabitGroup(containerId, filteredHabits, byCategory, todayLogs, we
     habits.forEach(h => {
       if (h.frequency_type === 'daily') {
         const done = todayLogs.has(h.id);
-        html += `<div class="habit-row ${done ? 'completed' : ''}" onclick="toggleHabitLog('${h.id}', '${today}', this)">
+        html += `<div class="habit-row ${done ? 'completed' : ''}" data-habit-id="${h.id}" data-today="${today}" data-type="daily">
           <div class="habit-check ${done ? 'done' : ''}">${done ? '✓' : ''}</div>
           <div class="habit-name">${h.name}</div>
         </div>`;
@@ -1856,7 +1926,7 @@ function renderHabitGroup(containerId, filteredHabits, byCategory, todayLogs, we
           pips += `<div class="pip ${i < count ? 'done' : ''}"></div>`;
         }
 
-        html += `<div class="habit-row ${loggedToday ? 'completed' : ''}" onclick="toggleHabitLog('${h.id}', '${today}', this)">
+        html += `<div class="habit-row ${loggedToday ? 'completed' : ''}" data-habit-id="${h.id}" data-today="${today}" data-type="weekly">
           <div class="habit-check ${loggedToday ? 'done' : ''}">${loggedToday ? '✓' : ''}</div>
           <div class="habit-name">${h.name}</div>
           <div class="weekly-progress">
@@ -1869,6 +1939,40 @@ function renderHabitGroup(containerId, filteredHabits, byCategory, todayLogs, we
   });
 
   el.innerHTML = html;
+  attachHabitRowEvents(el);
+}
+
+function attachHabitRowEvents(container) {
+  container.querySelectorAll('.habit-row').forEach(row => {
+    const habitId = row.dataset.habitId;
+    const today   = row.dataset.today;
+    let holdTimer = null;
+
+    const startHold = () => {
+      holdTimer = setTimeout(() => {
+        holdTimer = null;
+        showHabitDesc(habitId);
+      }, 500);
+    };
+
+    const cancelHold = () => {
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+    };
+
+    const handleTap = () => {
+      if (holdTimer) {
+        cancelHold();
+        toggleHabitLog(habitId, today, row);
+      }
+    };
+
+    row.addEventListener('touchstart', startHold, { passive: true });
+    row.addEventListener('touchend', handleTap);
+    row.addEventListener('touchmove', cancelHold, { passive: true });
+    row.addEventListener('mousedown', startHold);
+    row.addEventListener('mouseup', handleTap);
+    row.addEventListener('mouseleave', cancelHold);
+  });
 }
 
 function getNudgeClass(remaining, daysLeft) {
@@ -2128,6 +2232,26 @@ function renderCategoryAdmin() {
     </div>
   `).join('');
 }
+
+// ── Habit description modal ───────────────────────
+function showHabitDesc(habitId) {
+  const habit = habits.find(h => h.id === habitId);
+  if (!habit) return;
+  const catMap = {};
+  habitCats.forEach(c => { catMap[c.id] = c.name; });
+
+  document.getElementById('modal-habit-name').textContent = habit.name;
+  document.getElementById('modal-habit-cat').textContent  = catMap[habit.category_id] || '';
+  document.getElementById('modal-habit-desc').textContent = habit.description || 'No description provided.';
+  document.getElementById('habit-modal').classList.add('show');
+}
+
+function closeHabitModal(e) {
+  if (e.target === document.getElementById('habit-modal')) {
+    document.getElementById('habit-modal').classList.remove('show');
+  }
+}
+
 
 // ── Toast ─────────────────────────────────────────────────
 function showToast(msg, type) {
