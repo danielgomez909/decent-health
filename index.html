@@ -16,6 +16,7 @@
     --accent: #c2623f;
     --accent2: #d97706;
     --danger: #dc2626;
+    --good: #16a34a;
     --text: #2c2420;
     --text2: #6b5e58;
     --text3: #a8978f;
@@ -133,7 +134,7 @@
     line-height: 1;
   }
 
-  .stat-value.good { color: var(--accent); }
+  .stat-value.good { color: var(--good); }
   .stat-value.warn { color: var(--accent2); }
   .stat-value.bad  { color: var(--danger); }
 
@@ -233,7 +234,7 @@
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: var(--surface2); }
 
-  .positive { color: var(--accent); }
+  .positive { color: var(--good); }
   .negative { color: var(--danger); }
   .neutral  { color: var(--text2); }
 
@@ -245,7 +246,7 @@
     font-weight: 600;
   }
 
-  .streak-pos { background: rgba(194,98,63,0.12); color: var(--accent); }
+  .streak-pos { background: rgba(22,163,74,0.12); color: var(--good); }
   .streak-neg { background: rgba(220,38,38,0.12); color: var(--danger); }
 
   .config-row {
@@ -343,8 +344,8 @@
   }
 
   .habit-check.done {
-    background: var(--accent);
-    border-color: var(--accent);
+    background: var(--good);
+    border-color: var(--good);
     color: #fff;
   }
 
@@ -391,7 +392,7 @@
     background: var(--border);
   }
 
-  .pip.done { background: var(--accent); }
+  .pip.done { background: var(--good); }
 
   /* Admin subtabs */
   .subtab-nav {
@@ -744,10 +745,13 @@
   <!-- HABITS PAGE -->
   <div id="page-habits" class="page">
 
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <div style="font-family:var(--font-display);font-size:18px;color:var(--text)">Today's Habits</div>
-      <div style="font-size:12px;color:var(--text3)" id="habits-date-label"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-family:var(--font-display);font-size:18px;color:var(--text)">Habits</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="date" id="habits-date" onchange="renderHabits()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:13px;padding:4px 8px;outline:none" />
+      </div>
     </div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:8px" id="habits-date-label"></div>
 
     <!-- Daily habits -->
     <div id="daily-habits-section">
@@ -1343,7 +1347,12 @@ async function showPage(name, btn) {
   btn.classList.add('active');
   if (name === 'admin')  { await loadConfig(); await loadHabitsData(); renderAdmin(); }
   if (name === 'leg')    { setDefaultLegDates(); await loadLegData(); renderLeg(); }
-  if (name === 'habits') { await loadHabitsData(); await loadHabitStreakLogs(); renderHabits(); }
+  if (name === 'habits') {
+    const habitsDateEl = document.getElementById('habits-date');
+    if (habitsDateEl) { habitsDateEl.value = localToday(); habitsDateEl.max = localToday(); }
+    await loadHabitsData();
+    renderHabits();
+  }
 }
 
 function renderAdmin() {
@@ -1729,7 +1738,9 @@ function renderLegTable() {
     const prevAvg  = getWeightAvgForDate(prevStr);
     let trend = '—';
     if (todayAvg != null && prevAvg != null) {
-      trend = todayAvg < prevAvg ? '↓' : todayAvg > prevAvg ? '↑' : '→';
+      if (todayAvg < prevAvg) trend = '<span style="color:var(--good)">↓</span>';
+      else if (todayAvg > prevAvg) trend = '<span style="color:var(--danger)">↑</span>';
+      else trend = '<span style="color:var(--text3)">→</span>';
     }
 
     return { log: l, ctx, prevStr, trend };
@@ -1788,6 +1799,14 @@ let habitCats   = [];
 let habitLogs   = [];
 let editingHabitId = null;
 
+// ── Date helpers ─────────────────────────────────
+function localToday() {
+  const d = new Date();
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
 // Week helpers (Mon-Sun)
 function getWeekStart(date) {
   const d = new Date(date + 'T12:00:00');
@@ -1812,11 +1831,17 @@ function getDaysRemainingInWeek(weekStart) {
 }
 
 async function loadHabitsData() {
+  // Load 90 days of logs for streak calculation + current week display
+  const from = new Date();
+  from.setDate(from.getDate() - 90);
+  const fromStr = from.getFullYear() + '-' +
+    String(from.getMonth() + 1).padStart(2, '0') + '-' +
+    String(from.getDate()).padStart(2, '0');
+
   const [habitsRes, catsRes, logsRes] = await Promise.all([
     sb.from('habits').select('*').order('name'),
     sb.from('habit_categories').select('*').order('name'),
-    sb.from('habit_logs').select('*').gte('log_date', getWeekStart(new Date().toISOString().split('T')[0]))
-      .order('log_date', { ascending: false })
+    sb.from('habit_logs').select('*').gte('log_date', fromStr).order('log_date', { ascending: false })
   ]);
 
   if (habitsRes.error) { showToast('Error loading habits', 'error'); return; }
@@ -1829,21 +1854,17 @@ async function loadHabitsData() {
 }
 
 async function loadHabitStreakLogs() {
-  // Load last 90 days for streak calculation
-  const from = new Date();
-  from.setDate(from.getDate() - 90);
-  const fromStr = from.toISOString().split('T')[0];
-  const { data, error } = await sb.from('habit_logs').select('*').gte('log_date', fromStr);
-  if (!error) habitLogs = data || [];
+  // Now handled in loadHabitsData — kept for compatibility
+  await loadHabitsData();
 }
 
 function renderHabits() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = document.getElementById('habits-date')?.value || localToday();
   const weekStart = getWeekStart(today);
   const weekEnd   = getWeekEnd(weekStart);
 
   document.getElementById('habits-date-label').textContent =
-    new Date(today + 'T12:00:00').toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+    new Date(today + 'T12:00:00').toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
 
   const activeHabits = habits.filter(h => h.is_active);
   const catMap = {};
@@ -2091,6 +2112,7 @@ function renderHabitStreaks(activeHabits, catMap, today, weekStart, weekEnd) {
   html += '<th style="text-align:left;padding:6px 8px;color:var(--text3);font-size:11px;border-bottom:1px solid var(--border)">Type</th>';
   html += '<th style="text-align:right;padding:6px 8px;color:var(--text3);font-size:11px;border-bottom:1px solid var(--border)">Streak</th>';
   html += '<th style="text-align:right;padding:6px 8px;color:var(--text3);font-size:11px;border-bottom:1px solid var(--border)">This Week</th>';
+  html += '<th style="text-align:right;padding:6px 8px;color:var(--text3);font-size:11px;border-bottom:1px solid var(--border)">Avg %</th>';
   html += '</tr></thead><tbody>';
 
   sorted.forEach(h => {
@@ -2102,11 +2124,23 @@ function renderHabitStreaks(activeHabits, catMap, today, weekStart, weekEnd) {
     const weekTarget = h.frequency_type === 'daily' ? 7 : (h.weekly_target || 1);
     const weekStr    = weekCount + ' / ' + weekTarget;
 
+    // Completion % over rolling avg window
+    const avgDays = getVal('rolling_avg_days', 14);
+    const windowFrom = new Date();
+    windowFrom.setDate(windowFrom.getDate() - avgDays);
+    const windowFromStr = windowFrom.getFullYear() + '-' +
+      String(windowFrom.getMonth()+1).padStart(2,'0') + '-' +
+      String(windowFrom.getDate()).padStart(2,'0');
+    const windowLogs = habitLogs.filter(l => l.habit_id === h.id && l.log_date >= windowFromStr);
+    const pct = Math.round((windowLogs.length / avgDays) * 100);
+    const pctColor = pct >= 80 ? 'var(--good)' : pct >= 50 ? 'var(--accent2)' : 'var(--danger)';
+
     html += `<tr>
       <td style="padding:8px;color:var(--text);border-bottom:1px solid var(--border)">${h.name}</td>
       <td style="padding:8px;color:var(--text3);border-bottom:1px solid var(--border)">${h.frequency_type}</td>
-      <td style="padding:8px;text-align:right;color:var(--accent);font-weight:600;border-bottom:1px solid var(--border)">${streak}</td>
+      <td style="padding:8px;text-align:right;color:var(--good);font-weight:600;border-bottom:1px solid var(--border)">${streak}</td>
       <td style="padding:8px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">${weekStr}</td>
+      <td style="padding:8px;text-align:right;color:${pctColor};font-weight:600;border-bottom:1px solid var(--border)">${pct}%</td>
     </tr>`;
   });
 
