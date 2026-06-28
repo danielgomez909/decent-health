@@ -1081,14 +1081,16 @@
 
     <!-- DIRECTORY SUBTAB -->
     <div id="doctors-subtab-directory" class="subtab-panel active">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div style="font-size:13px;color:var(--text2)">Practices &amp; providers</div>
-        <button class="btn" onclick="showDoctorForm()">+ Add</button>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:13px;color:var(--text2)">Practices &amp; providers</div>
+          <button class="btn" onclick="showDoctorForm()">+ Add</button>
+        </div>
+        <div id="doctors-list"><div class="loading">Loading…</div></div>
       </div>
-      <div id="doctors-list"><div class="loading">Loading…</div></div>
 
       <!-- Doctor form -->
-      <div id="doctor-form" style="display:none;margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+      <div id="doctor-form" style="display:none;margin-top:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
         <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px" id="doctor-form-title">Add Practice</div>
         <div style="display:flex;flex-direction:column;gap:10px">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -1134,25 +1136,34 @@
 
     <!-- APPOINTMENTS SUBTAB -->
     <div id="doctors-subtab-appointments" class="subtab-panel">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div style="font-size:13px;color:var(--text2)">Appointment log</div>
-        <button class="btn" onclick="showApptForm()">+ Add</button>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:13px;color:var(--text2)">Appointment log</div>
+          <button class="btn" onclick="showApptForm()">+ Add</button>
+        </div>
+        <!-- Filters -->
+        <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:flex-end">
+          <div style="flex:2;min-width:120px">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px">Practice</div>
+            <select id="appt-filter-doctor" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:12px;padding:4px 6px;outline:none;width:100%" onchange="renderApptList()">
+              <option value="">All</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:100px">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px">From</div>
+            <input type="date" id="appt-filter-from" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:11px;padding:4px 6px;outline:none;width:100%" onchange="renderApptList()" />
+          </div>
+          <div style="flex:1;min-width:100px">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px">To</div>
+            <input type="date" id="appt-filter-to" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:11px;padding:4px 6px;outline:none;width:100%" onchange="renderApptList()" />
+          </div>
+          <button class="btn" style="background:var(--surface2);color:var(--text2);font-size:11px;padding:4px 8px;align-self:flex-end" onclick="clearApptFilters()">Clear</button>
+        </div>
+        <div id="appt-list"><div class="loading">Loading…</div></div>
       </div>
-
-      <!-- Filters -->
-      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-        <select id="appt-filter-doctor" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:13px;padding:5px 8px;outline:none;flex:1;min-width:140px" onchange="renderApptList()">
-          <option value="">All practices</option>
-        </select>
-        <input type="date" id="appt-filter-from" class="panel-input" style="flex:1;min-width:120px" onchange="renderApptList()" placeholder="From" />
-        <input type="date" id="appt-filter-to" class="panel-input" style="flex:1;min-width:120px" onchange="renderApptList()" placeholder="To" />
-        <button class="btn" style="background:var(--surface2);color:var(--text2);font-size:12px;padding:5px 10px" onclick="clearApptFilters()">Clear</button>
-      </div>
-
-      <div id="appt-list"><div class="loading">Loading…</div></div>
 
       <!-- Appointment form -->
-      <div id="appt-form" style="display:none;margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+      <div id="appt-form" style="display:none;margin-top:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
         <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px" id="appt-form-title">Add Appointment</div>
         <div style="display:flex;flex-direction:column;gap:10px">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -3120,11 +3131,14 @@ async function saveDoctor() {
   if (!practice) { showToast('Practice name required', 'error'); return; }
   if (!doctor)   { showToast('Doctor name required', 'error'); return; }
 
+  const rawPhone = document.getElementById('df-phone').value.trim();
+  const fmtPhone = formatPhone(rawPhone);
+
   const payload = {
     practice_name: practice,
     doctor_name:   doctor,
     specialty:     document.getElementById('df-specialty').value.trim() || null,
-    phone:         document.getElementById('df-phone').value.trim()     || null,
+    phone:         fmtPhone || null,
     address:       document.getElementById('df-address').value.trim()   || null,
     portal_url:    document.getElementById('df-portal').value.trim()    || null,
     notes:         document.getElementById('df-notes').value.trim()     || null
@@ -3298,6 +3312,18 @@ async function deleteAppt() {
 function esc(s) {
   if (!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatPhone(raw) {
+  if (!raw) return '';
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 10) {
+    return '(' + digits.slice(0,3) + ') ' + digits.slice(3,6) + '-' + digits.slice(6);
+  }
+  if (digits.length === 11 && digits[0] === '1') {
+    return '(' + digits.slice(1,4) + ') ' + digits.slice(4,7) + '-' + digits.slice(7);
+  }
+  return raw; // return as-is if not 10/11 digits
 }
 
 // ── Auth ─────────────────────────────────────────
