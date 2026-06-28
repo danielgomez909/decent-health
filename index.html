@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Decent Health</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Decent Health">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -514,6 +520,7 @@
     <button class="nav-btn" data-page="leg" onclick="showPage('leg', this)">Leg</button>
     <button class="nav-btn" data-page="habits" onclick="showPage('habits', this)">Habits</button>
     <button class="nav-btn" data-page="admin" onclick="showPage('admin', this)">Admin</button>
+    <button class="nav-btn" data-page="reference" onclick="showPage('reference', this)">Ref</button>
   </nav>
 </header>
 
@@ -858,6 +865,11 @@
     <button class="modal-close" onclick="document.getElementById('habit-modal').classList.remove('show')">Close</button>
   </div>
 </div>
+
+  <!-- REFERENCE PAGE -->
+  <div id="page-reference" class="page" style="height:calc(100vh - 60px)">
+    <iframe src="./decent-health-reference.html" style="width:100%;height:100%;border:none;"></iframe>
+  </div>
 
 <div class="toast" id="toast"></div>
 
@@ -1345,7 +1357,8 @@ async function showPage(name, btn) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'admin')  { await loadConfig(); await loadHabitsData(); renderAdmin(); }
+  if (name === 'admin')     { await loadConfig(); await loadHabitsData(); renderAdmin(); }
+  // reference tab loads via iframe automatically
   if (name === 'leg')    { setDefaultLegDates(); await loadLegData(); renderLeg(); }
   if (name === 'habits') {
     const habitsDateEl = document.getElementById('habits-date');
