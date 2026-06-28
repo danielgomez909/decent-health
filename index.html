@@ -707,13 +707,14 @@
         <table>
           <thead>
             <tr>
-              <th>Date</th>
+              <th>Wt Date</th>
               <th>Weight</th>
               <th>Avg (<span id="th-avg-days">14</span>d)</th>
               <th>vs Avg</th>
               <th>Target</th>
               <th>vs Target</th>
               <th>Streak</th>
+              <th>Ctx Date</th>
               <th>Food</th>
               <th style="text-align:left">Notes</th>
             </tr>
@@ -1098,9 +1099,9 @@ function buildRows() {
 
   // Date range: first log date → today + 7
   const startDate = new Date(logs[0].log_date + 'T00:00:00');
-  const endDate   = new Date();
-  endDate.setDate(endDate.getDate() + 7);
-  const todayStr  = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
+  const todayStr = localToday();
 
   // Build continuous date array
   const allDates = [];
@@ -1421,7 +1422,7 @@ function renderTable(rows) {
   const tbody = document.getElementById('weight-table-body');
 
   if (!withWeight.length) {
-    tbody.innerHTML = '<tr><td colspan="9" class="loading">No entries yet.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="loading">No entries yet.</td></tr>';
     return;
   }
 
@@ -1433,7 +1434,7 @@ function renderTable(rows) {
   };
 
   const foodLabel = s => s == null ? '—' : ['Good','Weak','Poor','Bad'][s] ?? s;
-  const foodColor = s => s == null ? 'var(--text3)' : s === 0 ? 'var(--accent)' : s === 1 ? 'var(--accent2)' : 'var(--danger)';
+  const foodColor = s => s == null ? 'var(--text3)' : s === 0 ? 'var(--good)' : s === 1 ? 'var(--accent2)' : 'var(--danger)';
 
   const ctxMap = {};
   weightContext.forEach(c => { ctxMap[c.context_date] = c; });
@@ -1441,21 +1442,26 @@ function renderTable(rows) {
   tbody.innerHTML = withWeight.map(r => {
     const d = new Date(r.date + 'T12:00:00');
     const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
     const streakHtml = r.streak != null
       ? '<span class="streak-badge ' + (r.streak > 0 ? 'streak-pos' : 'streak-neg') + '">'
         + (r.streak > 0 ? '+' : '') + r.streak + '</span>'
       : '—';
+
+    // Context is for the day before this weight entry
     const prevDate = new Date(r.date + 'T12:00:00');
     prevDate.setDate(prevDate.getDate() - 1);
-    const prevStr  = prevDate.toISOString().split('T')[0];
-    const ctx      = ctxMap[prevStr];
-    const foodHtml = ctx
+    const prevStr    = prevDate.toISOString().split('T')[0];
+    const ctx        = ctxMap[prevStr];
+    const ctxDateStr = ctx ? prevDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+    const foodHtml   = ctx
       ? '<span style="color:' + foodColor(ctx.food_score) + '">' + foodLabel(ctx.food_score) + '</span>'
       : '—';
+
     return '<tr><td>' + dateStr + '</td><td>' + fmt(r.weight) + '</td><td>'
       + fmt(r.avg) + '</td><td>' + fmtDiff(r.vsAvg) + '</td><td>'
       + fmt(r.target) + '</td><td>' + fmtDiff(r.vsTarget) + '</td><td>'
-      + streakHtml + '</td><td>' + foodHtml + '</td>'
+      + streakHtml + '</td><td style="color:var(--text3);font-size:12px">' + ctxDateStr + '</td><td>' + foodHtml + '</td>'
       + '<td style="text-align:left;color:var(--text2)">' + (ctx?.food_notes || '') + '</td></tr>';
   }).join('');
 }
