@@ -594,6 +594,7 @@
     <button class="nav-btn active" data-page="weight" onclick="showPage('weight', this)">Weight</button>
     <button class="nav-btn" data-page="leg" onclick="showPage('leg', this)">Leg</button>
     <button class="nav-btn" data-page="habits" onclick="showPage('habits', this)">Habits</button>
+    <button class="nav-btn" data-page="diary" onclick="showPage('diary', this)">Diary</button>
     <button class="nav-btn" data-page="admin" onclick="showPage('admin', this)">Admin</button>
     <button class="nav-btn" data-page="reference" onclick="showPage('reference', this)">Ref</button>
   </nav>
@@ -963,6 +964,109 @@
     <button class="modal-close" onclick="document.getElementById('habit-modal').classList.remove('show')">Close</button>
   </div>
 </div>
+
+  <!-- DIARY PAGE -->
+  <div id="page-diary" class="page">
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="card-title" style="margin-bottom:0">Health Diary</div>
+        <button class="btn" onclick="saveDiary()">Save</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="diary-date" class="panel-input" />
+          </div>
+          <div class="form-group">
+            <label>Rating</label>
+            <select id="diary-rating" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:13px;padding:5px 8px;outline:none;width:100%">
+              <option value="">— select —</option>
+              <option value="5">Great</option>
+              <option value="4">Good</option>
+              <option value="3">OK</option>
+              <option value="2">Poor</option>
+              <option value="1">Awful</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>How I'm feeling (physical, mental)</label>
+          <input type="text" id="diary-feeling" class="panel-input" placeholder="e.g. Energetic, positive outlook" />
+        </div>
+        <div class="form-group">
+          <label>Stressors (home, work, other)</label>
+          <input type="text" id="diary-stressors" class="panel-input" placeholder="e.g. Busy week at work" />
+        </div>
+        <div class="form-group">
+          <label>What brought joy</label>
+          <input type="text" id="diary-joy" class="panel-input" placeholder="e.g. Family dinner, finished a project" />
+        </div>
+        <div class="form-group">
+          <label>Current ailments I'm monitoring</label>
+          <input type="text" id="diary-ailments" class="panel-input" placeholder="e.g. Ankle swelling improving" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:nowrap">
+      <div class="stat" style="flex:1;padding:8px 10px">
+        <div class="stat-label">Last Rating</div>
+        <div class="stat-value" id="diary-stat-last" style="font-size:18px">—</div>
+        <div class="stat-sub" id="diary-stat-last-date"></div>
+      </div>
+      <div class="stat" style="flex:1;padding:8px 10px">
+        <div class="stat-label">14d Avg</div>
+        <div class="stat-value" id="diary-stat-avg" style="font-size:18px">—</div>
+        <div class="stat-sub" id="diary-stat-avg-sub"></div>
+      </div>
+      <div class="stat" style="flex:1;padding:8px 10px">
+        <div class="stat-label">Good+ Streak</div>
+        <div class="stat-value" id="diary-stat-streak-a" style="font-size:18px">—</div>
+        <div class="stat-sub">days since last OK or worse</div>
+      </div>
+      <div class="stat" style="flex:1;padding:8px 10px">
+        <div class="stat-label">No Bad Streak</div>
+        <div class="stat-value" id="diary-stat-streak-b" style="font-size:18px">—</div>
+        <div class="stat-sub">days since last Poor or Awful</div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="card">
+      <div class="card-title">
+        21-Day Window
+        <span style="font-family:var(--font-body);font-size:12px;color:var(--text3);font-weight:400;margin-left:8px">14 days back · 7 days forward</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="diary-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- Recent log -->
+    <div class="card">
+      <div class="card-title">Recent Log</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Rating</th>
+              <th style="text-align:left">Feeling</th>
+              <th style="text-align:left">Stressors</th>
+              <th style="text-align:left">Joy</th>
+              <th style="text-align:left">Ailments</th>
+            </tr>
+          </thead>
+          <tbody id="diary-table-body">
+            <tr><td colspan="6" class="loading">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
   <!-- REFERENCE PAGE -->
   <div id="page-reference" class="page" style="height:calc(100vh - 60px)">
@@ -1493,6 +1597,7 @@ async function showPage(name, btn) {
   document.getElementById('page-' + name).classList.add('active');
   btn.classList.add('active');
   if (name === 'admin')     { await loadConfig(); await loadHabitsData(); renderAdmin(); }
+  if (name === 'diary') { setDefaultDiaryDate(); await loadDiaryEntries(); renderDiary(); }
   // reference tab loads via iframe automatically
   if (name === 'leg')    { setDefaultLegDates(); await loadLegData(); renderLeg(); }
   if (name === 'habits') {
@@ -2487,6 +2592,313 @@ function dynShrink(el) {
   el.classList.remove('shrink-sm', 'shrink-xs');
   if (len >= 8) el.classList.add('shrink-xs');
   else if (len >= 5) el.classList.add('shrink-sm');
+}
+
+// ── Health Diary ──────────────────────────────────
+let diaryEntries = [];
+let diaryChart   = null;
+
+const RATING_LABEL = ['','Awful','Poor','OK','Good','Great'];
+const RATING_COLOR = ['','var(--danger)','var(--danger)','var(--accent2)','var(--good)','var(--good)'];
+
+function setDefaultDiaryDate() {
+  const today = localToday();
+  const el = document.getElementById('diary-date');
+  if (el) { el.value = today; el.max = today; }
+}
+
+async function loadDiaryEntries() {
+  const from = new Date();
+  from.setDate(from.getDate() - 90);
+  const fromStr = from.getFullYear() + '-' +
+    String(from.getMonth()+1).padStart(2,'0') + '-' +
+    String(from.getDate()).padStart(2,'0');
+
+  const { data, error } = await sb
+    .from('health_diary')
+    .select('*')
+    .gte('entry_date', fromStr)
+    .order('entry_date', { ascending: false });
+
+  if (error) { showToast('Error loading diary', 'error'); return; }
+  diaryEntries = data || [];
+}
+
+async function saveDiary() {
+  const dateVal   = document.getElementById('diary-date').value;
+  const ratingVal = document.getElementById('diary-rating').value;
+  const feeling   = document.getElementById('diary-feeling').value.trim();
+  const stressors = document.getElementById('diary-stressors').value.trim();
+  const joy       = document.getElementById('diary-joy').value.trim();
+  const ailments  = document.getElementById('diary-ailments').value.trim();
+
+  if (!dateVal)   { showToast('Please select a date', 'error'); return; }
+  if (!ratingVal) { showToast('Please select a rating', 'error'); return; }
+
+  const { error } = await sb.from('health_diary').upsert({
+    entry_date: dateVal,
+    rating:     parseInt(ratingVal),
+    feeling:    feeling   || null,
+    stressors:  stressors || null,
+    joy:        joy       || null,
+    ailments:   ailments  || null
+  }, { onConflict: 'entry_date' });
+
+  if (error) { showToast('Error saving diary entry', 'error'); return; }
+
+  showToast('Diary entry saved ✓', 'success');
+
+  // Clear text fields, keep date
+  ['diary-feeling','diary-stressors','diary-joy','diary-ailments'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('diary-rating').value = '';
+
+  await loadDiaryEntries();
+  renderDiary();
+}
+
+function renderDiary() {
+  renderDiaryStats();
+  renderDiaryChart();
+  renderDiaryTable();
+}
+
+function renderDiaryStats() {
+  const today = localToday();
+  const avgWindow = getVal('rolling_avg_days', 14);
+
+  // Last entry
+  const last = diaryEntries[0];
+  if (last) {
+    const el = document.getElementById('diary-stat-last');
+    el.textContent = RATING_LABEL[last.rating];
+    el.style.color = RATING_COLOR[last.rating];
+    const d = new Date(last.entry_date + 'T12:00:00');
+    document.getElementById('diary-stat-last-date').textContent =
+      d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  }
+
+  // Rolling avg over last N days
+  const windowFrom = new Date();
+  windowFrom.setDate(windowFrom.getDate() - avgWindow);
+  const windowFromStr = windowFrom.getFullYear() + '-' +
+    String(windowFrom.getMonth()+1).padStart(2,'0') + '-' +
+    String(windowFrom.getDate()).padStart(2,'0');
+
+  const inWindow = diaryEntries.filter(e => e.entry_date >= windowFromStr);
+  if (inWindow.length) {
+    const avg = inWindow.reduce((s, e) => s + e.rating, 0) / inWindow.length;
+    const avgEl = document.getElementById('diary-stat-avg');
+    avgEl.textContent = avg.toFixed(1);
+    avgEl.style.color = avg >= 4 ? 'var(--good)' : avg >= 3 ? 'var(--accent2)' : 'var(--danger)';
+    document.getElementById('diary-stat-avg-sub').textContent = avgWindow + '-day avg (' + inWindow.length + ' entries)';
+  }
+
+  // Streak A: calendar days since last entry that was NOT Good(4) or Great(5)
+  // Find most recent entry with rating <= 3
+  const lastNotGood = diaryEntries.find(e => e.rating <= 3);
+  const todayDate = new Date(today + 'T12:00:00');
+  if (lastNotGood) {
+    const lastBadDate = new Date(lastNotGood.entry_date + 'T12:00:00');
+    const streakA = Math.round((todayDate - lastBadDate) / 86400000);
+    const elA = document.getElementById('diary-stat-streak-a');
+    elA.textContent = streakA + 'd';
+    elA.className = 'stat-value ' + (streakA >= 7 ? 'good' : '');
+    elA.style.color = streakA >= 7 ? 'var(--good)' : 'var(--text)';
+  } else if (diaryEntries.length) {
+    // All entries are Good or Great
+    const firstEntry = new Date(diaryEntries[diaryEntries.length-1].entry_date + 'T12:00:00');
+    const streakA = Math.round((todayDate - firstEntry) / 86400000);
+    const elA = document.getElementById('diary-stat-streak-a');
+    elA.textContent = streakA + 'd';
+    elA.style.color = 'var(--good)';
+  }
+
+  // Streak B: calendar days since last Poor(2) or Awful(1)
+  const lastPoorAwful = diaryEntries.find(e => e.rating <= 2);
+  if (lastPoorAwful) {
+    const lastPoorDate = new Date(lastPoorAwful.entry_date + 'T12:00:00');
+    const streakB = Math.round((todayDate - lastPoorDate) / 86400000);
+    const elB = document.getElementById('diary-stat-streak-b');
+    elB.textContent = streakB + 'd';
+    elB.style.color = streakB >= 7 ? 'var(--good)' : 'var(--text)';
+  } else if (diaryEntries.length) {
+    const firstEntry = new Date(diaryEntries[diaryEntries.length-1].entry_date + 'T12:00:00');
+    const streakB = Math.round((todayDate - firstEntry) / 86400000);
+    const elB = document.getElementById('diary-stat-streak-b');
+    elB.textContent = streakB + 'd';
+    elB.style.color = 'var(--good)';
+  }
+}
+
+function renderDiaryChart() {
+  const today = localToday();
+  const avgWindow = getVal('rolling_avg_days', 14);
+
+  // Build date range: 14 back from today, 7 forward
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 14);
+  const endDate = new Date();
+  endDate.setDate(endDate.getDate() + 7);
+
+  const dates = [];
+  const cur = new Date(startDate);
+  while (cur <= endDate) {
+    dates.push(cur.getFullYear() + '-' +
+      String(cur.getMonth()+1).padStart(2,'0') + '-' +
+      String(cur.getDate()).padStart(2,'0'));
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  const entryMap = {};
+  diaryEntries.forEach(e => { entryMap[e.entry_date] = e.rating; });
+
+  const ratings = dates.map(d => entryMap[d] != null ? entryMap[d] : null);
+
+  // Rolling avg: for each date, avg of entries in prior N calendar days
+  const avgs = dates.map(d => {
+    const windowStart = new Date(d + 'T12:00:00');
+    windowStart.setDate(windowStart.getDate() - avgWindow);
+    const wsStr = windowStart.getFullYear() + '-' +
+      String(windowStart.getMonth()+1).padStart(2,'0') + '-' +
+      String(windowStart.getDate()).padStart(2,'0');
+    const inW = diaryEntries.filter(e => e.entry_date >= wsStr && e.entry_date <= d);
+    if (!inW.length) return null;
+    return inW.reduce((s, e) => s + e.rating, 0) / inW.length;
+  });
+
+  const todayMark = dates.indexOf(today);
+  const allVals = [...ratings, ...avgs].filter(v => v != null);
+  const yMin = 0.5;
+  const yMax = 5.5;
+
+  const todayLinePlugin = {
+    id: 'diaryTodayLine',
+    afterDraw(ch) {
+      if (todayMark < 0) return;
+      const meta = ch.getDatasetMeta(0);
+      if (!meta.data[todayMark]) return;
+      const x = meta.data[todayMark].x;
+      const { top, bottom } = ch.scales.y;
+      const c = ch.ctx;
+      c.save();
+      c.beginPath();
+      c.strokeStyle = 'rgba(194,98,63,0.4)';
+      c.lineWidth = 1;
+      c.setLineDash([4,4]);
+      c.moveTo(x, top);
+      c.lineTo(x, bottom);
+      c.stroke();
+      c.restore();
+    }
+  };
+
+  if (diaryChart) diaryChart.destroy();
+
+  const ctx = document.getElementById('diary-chart').getContext('2d');
+  diaryChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: dates.map(d => {
+        const dt = new Date(d + 'T12:00:00');
+        return dt.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+      }),
+      datasets: [
+        {
+          label: 'Rating',
+          data: ratings,
+          borderColor: '#2c2420',
+          backgroundColor: 'rgba(44,36,32,0.04)',
+          pointBackgroundColor: ratings.map(r =>
+            r == null ? 'transparent' : r >= 4 ? '#16a34a' : r === 3 ? '#d97706' : '#dc2626'
+          ),
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 2,
+          tension: 0.3,
+          spanGaps: true,
+        },
+        {
+          label: 'Avg Rating',
+          data: avgs.map(v => v != null ? +v.toFixed(2) : null),
+          borderColor: '#c2623f',
+          backgroundColor: 'transparent',
+          pointRadius: 0,
+          borderWidth: 2,
+          tension: 0.4,
+          spanGaps: true,
+        }
+      ]
+    },
+    plugins: [todayLinePlugin],
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { left:0, right:0, top:4, bottom:0 } },
+      interaction: { mode:'index', intersect:false },
+      events: ['mousemove','mouseout','click','touchstart','touchmove'],
+      plugins: {
+        legend: {
+          labels: { color:'#6b5e58', font:{ family:'DM Sans', size:12 }, boxWidth:16, padding:16 }
+        },
+        tooltip: {
+          backgroundColor: '#ffffff',
+          borderColor: '#e8e0d8',
+          borderWidth: 1,
+          titleColor: '#2c2420',
+          bodyColor: '#6b5e58',
+          callbacks: {
+            label: ctx => {
+              const v = ctx.raw;
+              if (v == null) return null;
+              if (ctx.datasetIndex === 0) return ' Rating: ' + RATING_LABEL[Math.round(v)] + ' (' + v + ')';
+              return ' Avg: ' + v.toFixed(2);
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color:'#e8e0d8' },
+          ticks: { color:'#a8978f', font:{ family:'DM Sans', size:11 } }
+        },
+        y: {
+          min: yMin, max: yMax,
+          grid: { color:'#e8e0d8' },
+          ticks: {
+            color:'#a8978f',
+            font:{ family:'DM Sans', size:11 },
+            stepSize: 1,
+            callback: v => RATING_LABEL[v] || ''
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderDiaryTable() {
+  const tbody = document.getElementById('diary-table-body');
+  const rows = diaryEntries.slice(0, 30);
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="loading">No entries yet.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map(e => {
+    const d = new Date(e.entry_date + 'T12:00:00');
+    const dateStr = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    return `<tr>
+      <td>${dateStr}</td>
+      <td style="color:${RATING_COLOR[e.rating]};font-weight:600">${RATING_LABEL[e.rating]}</td>
+      <td style="text-align:left;color:var(--text2)">${e.feeling || ''}</td>
+      <td style="text-align:left;color:var(--text2)">${e.stressors || ''}</td>
+      <td style="text-align:left;color:var(--text2)">${e.joy || ''}</td>
+      <td style="text-align:left;color:var(--text2)">${e.ailments || ''}</td>
+    </tr>`;
+  }).join('');
 }
 
 // ── Auth ─────────────────────────────────────────
