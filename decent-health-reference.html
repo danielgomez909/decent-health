@@ -19,19 +19,13 @@ h2 { font-family: 'Lora', serif; font-size: 22px; font-weight: 600; color: var(-
 h3 { font-family: 'Lora', serif; font-size: 16px; font-weight: 600; color: var(--brown); margin: 20px 0 8px; }
 p { margin-bottom: 10px; color: var(--brown-light); }
 .subtitle { font-size: 15px; color: var(--brown-light); margin-bottom: 32px; }
-
-/* Architecture */
 .arch { display: flex; align-items: center; gap: 0; flex-wrap: wrap; margin: 16px 0; }
 .arch-box { background: white; border: 1px solid var(--border-strong); border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 500; text-align: center; }
 .arch-box .label { font-size: 10px; color: var(--brown-light); text-transform: uppercase; letter-spacing: .06em; display: block; margin-bottom: 2px; }
 .arch-arrow { padding: 0 10px; color: var(--brown-light); font-size: 18px; }
-
-/* Service info */
 .service-grid { display: grid; grid-template-columns: 160px 1fr; gap: 6px 16px; margin: 12px 0; }
 .service-label { font-size: 11px; font-weight: 500; color: var(--brown-light); text-transform: uppercase; letter-spacing: .06em; padding-top: 2px; }
 .service-val { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent); word-break: break-all; }
-
-/* Schema tables */
 .schema-table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 13px; }
 .schema-table th { text-align: left; padding: 7px 10px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: var(--brown-light); border-bottom: 2px solid var(--border-strong); background: var(--cream2); }
 .schema-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
@@ -42,35 +36,27 @@ p { margin-bottom: 10px; color: var(--brown-light); }
 .col-name { font-family: 'DM Mono', monospace; font-size: 12px; }
 .col-type { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--brown-light); }
 .col-desc { font-size: 12px; color: var(--brown-light); }
-
-/* Backlog */
 .backlog-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .backlog-item:last-child { border-bottom: none; }
 .tag { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; flex-shrink: 0; margin-top: 2px; }
 .tag-ux      { background: rgba(192,98,42,0.12); color: var(--accent); }
 .tag-feature { background: rgba(74,103,65,0.12); color: var(--green); }
-.tag-data    { background: rgba(61,43,31,0.08); color: var(--brown-light); }
 .tag-security{ background: rgba(180,50,50,0.10); color: #b43232; }
-.tag-doc     { background: rgba(60,80,180,0.10); color: #3c50b4; }
-
-/* Version history */
 .version-row { display: grid; grid-template-columns: 110px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
 .version-row:last-child { border-bottom: none; }
 .version-date { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent); }
 .version-desc { font-size: 13px; color: var(--brown-light); }
-
-/* Deployment steps */
 .steps ol { padding-left: 20px; }
 .steps li { margin-bottom: 6px; color: var(--brown-light); }
-
 .card { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; }
+code { font-family: 'DM Mono', monospace; font-size: 12px; background: var(--cream2); padding: 1px 5px; border-radius: 3px; }
 </style>
 </head>
 <body>
 <div class="container">
 
   <h1>Decent Health</h1>
-  <p class="subtitle">Personal health tracking app — weight, leg measurements, and habits. Built to replace a Google Sheets workbook with a purpose-built mobile-first web app.</p>
+  <p class="subtitle">Personal health tracking app — weight, leg measurements, habits, health diary, and doctors directory. Built to replace a Google Sheets workbook with a purpose-built mobile-first web app.</p>
 
   <h2>Architecture</h2>
   <div class="card">
@@ -86,7 +72,7 @@ p { margin-bottom: 10px; color: var(--brown-light); }
       <div class="arch-arrow">→</div>
       <div class="arch-box"><span class="label">Auto-deploy</span>Vercel</div>
     </div>
-    <p style="margin-top:12px;font-size:12px">Single-file HTML/JS app. No framework, no build step. Deployed automatically on GitHub push.</p>
+    <p style="margin-top:12px;font-size:12px">Single-file HTML/JS app. No framework, no build step. Passphrase auth gate (SHA-256, stored in localStorage key: dh_auth_v1). Deployed automatically on GitHub push.</p>
   </div>
 
   <h2>Service Accounts</h2>
@@ -106,80 +92,77 @@ p { margin-bottom: 10px; color: var(--brown-light); }
   <h2>Database Schema</h2>
 
   <h3>weight_logs</h3>
-  <p>One row per day of weight entry.</p>
   <table class="schema-table">
     <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
     <tbody>
-      <tr><td class="col-name">id <span class="badge pk">PK</span></td><td class="col-type">uuid</td><td class="col-desc">Primary key, auto-generated</td></tr>
-      <tr><td class="col-name">log_date</td><td class="col-type">date</td><td class="col-desc">Date of weight entry — UNIQUE</td></tr>
-      <tr><td class="col-name">weight</td><td class="col-type">numeric(5,1)</td><td class="col-desc">Raw weight in lbs (e.g. 238.5)</td></tr>
-      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td class="col-desc">Auto-set on insert</td></tr>
+      <tr><td class="col-name">id <span class="badge pk">PK</span></td><td class="col-type">uuid</td><td class="col-desc">Primary key</td></tr>
+      <tr><td class="col-name">log_date</td><td class="col-type">date</td><td class="col-desc">Date of entry — UNIQUE</td></tr>
+      <tr><td class="col-name">weight</td><td class="col-type">numeric(5,1)</td><td class="col-desc">Weight in lbs</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td class="col-desc">Auto-set</td></tr>
     </tbody>
   </table>
 
   <h3>weight_context</h3>
-  <p>Optional daily food/behavior score — captured the morning after (context_date = yesterday).</p>
+  <p>Food/behavior score captured the morning after (context_date = yesterday).</p>
   <table class="schema-table">
     <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
     <tbody>
       <tr><td class="col-name">id <span class="badge pk">PK</span></td><td class="col-type">uuid</td><td class="col-desc">Primary key</td></tr>
-      <tr><td class="col-name">context_date</td><td class="col-type">date</td><td class="col-desc">The day being described — UNIQUE</td></tr>
+      <tr><td class="col-name">context_date</td><td class="col-type">date</td><td class="col-desc">Day being described — UNIQUE</td></tr>
       <tr><td class="col-name">food_score</td><td class="col-type">smallint</td><td class="col-desc">0=Good, 1=Some weakness, 2=Poor, 3=Really bad (nullable)</td></tr>
-      <tr><td class="col-name">food_notes</td><td class="col-type">text</td><td class="col-desc">Optional short notes about the day</td></tr>
-      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td class="col-desc">Auto-set on insert</td></tr>
+      <tr><td class="col-name">food_notes</td><td class="col-type">text</td><td class="col-desc">Optional notes (nullable)</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td class="col-desc">Auto-set</td></tr>
     </tbody>
   </table>
 
   <h3>health_config</h3>
-  <p>App-wide configuration key-value store.</p>
+  <p>App-wide config. Seeded: <code>rolling_avg_days=14</code>, <code>frozen_target=235</code>, <code>goal=220</code>, <code>commit=0.25</code></p>
   <table class="schema-table">
     <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
     <tbody>
-      <tr><td class="col-name">key <span class="badge pk">PK</span></td><td class="col-type">text</td><td class="col-desc">Config key (e.g. rolling_avg_days)</td></tr>
-      <tr><td class="col-name">value</td><td class="col-type">text</td><td class="col-desc">Config value (cast in app)</td></tr>
-      <tr><td class="col-name">label</td><td class="col-type">text</td><td class="col-desc">Display name for Admin tab</td></tr>
-      <tr><td class="col-name">description</td><td class="col-type">text</td><td class="col-desc">Help text shown in Admin tab</td></tr>
+      <tr><td class="col-name">key <span class="badge pk">PK</span></td><td class="col-type">text</td><td class="col-desc">Config key</td></tr>
+      <tr><td class="col-name">value</td><td class="col-type">text</td><td class="col-desc">Value (cast in app)</td></tr>
+      <tr><td class="col-name">label</td><td class="col-type">text</td><td class="col-desc">Display name</td></tr>
+      <tr><td class="col-name">description</td><td class="col-type">text</td><td class="col-desc">Help text</td></tr>
     </tbody>
   </table>
-  <p style="font-size:12px">Seeded values: <code>rolling_avg_days=14</code>, <code>frozen_target=235</code>, <code>goal=220</code>, <code>commit=0.25</code></p>
 
   <h3>leg_logs</h3>
-  <p>Daily leg circumference measurements.</p>
   <table class="schema-table">
     <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
     <tbody>
       <tr><td class="col-name">id <span class="badge pk">PK</span></td><td class="col-type">uuid</td><td class="col-desc">Primary key</td></tr>
-      <tr><td class="col-name">log_date</td><td class="col-type">date</td><td class="col-desc">Date of measurement — UNIQUE</td></tr>
-      <tr><td class="col-name">right_ankle</td><td class="col-type">numeric(4,2)</td><td class="col-desc">Right ankle circumference in cm</td></tr>
-      <tr><td class="col-name">left_ankle</td><td class="col-type">numeric(4,2)</td><td class="col-desc">Left ankle circumference in cm</td></tr>
-      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td class="col-desc">Auto-set on insert</td></tr>
+      <tr><td class="col-name">log_date</td><td class="col-type">date</td><td class="col-desc">Date — UNIQUE</td></tr>
+      <tr><td class="col-name">right_ankle</td><td class="col-type">numeric(4,2)</td><td class="col-desc">Right ankle cm</td></tr>
+      <tr><td class="col-name">left_ankle</td><td class="col-type">numeric(4,2)</td><td class="col-desc">Left ankle cm</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td class="col-desc">Auto-set</td></tr>
     </tbody>
   </table>
 
   <h3>leg_context</h3>
-  <p>Prior day context for leg measurements — sock usage and activity score captured the morning after.</p>
+  <p>Prior day context — sock usage and activity. Captured the morning after.</p>
   <table class="schema-table">
     <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
     <tbody>
       <tr><td class="col-name">id <span class="badge pk">PK</span></td><td class="col-type">uuid</td><td class="col-desc">Primary key</td></tr>
-      <tr><td class="col-name">context_date</td><td class="col-type">date</td><td class="col-desc">The day being described — UNIQUE</td></tr>
-      <tr><td class="col-name">wore_sock</td><td class="col-type">smallint</td><td class="col-desc">0=No, 1=Yes — wore compression sock</td></tr>
+      <tr><td class="col-name">context_date</td><td class="col-type">date</td><td class="col-desc">Day being described — UNIQUE</td></tr>
+      <tr><td class="col-name">wore_sock</td><td class="col-type">smallint</td><td class="col-desc">0=No, 1=Yes</td></tr>
       <tr><td class="col-name">activity_score</td><td class="col-type">smallint</td><td class="col-desc">0=Good, 1=Mixed, 2=Difficult (nullable)</td></tr>
-      <tr><td class="col-name">activity_notes</td><td class="col-type">text</td><td class="col-desc">Optional short activity notes</td></tr>
-      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td class="col-desc">Auto-set on insert</td></tr>
+      <tr><td class="col-name">activity_notes</td><td class="col-type">text</td><td class="col-desc">Optional notes (nullable)</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td class="col-desc">Auto-set</td></tr>
     </tbody>
   </table>
 
   <h3>habit_categories</h3>
+  <p>Seeded: Family, Health, Professional, Personal</p>
   <table class="schema-table">
     <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
     <tbody>
       <tr><td class="col-name">id <span class="badge pk">PK</span></td><td class="col-type">uuid</td><td class="col-desc">Primary key</td></tr>
       <tr><td class="col-name">name</td><td class="col-type">text</td><td class="col-desc">Category name — UNIQUE</td></tr>
-      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td class="col-desc">Auto-set on insert</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td class="col-desc">Auto-set</td></tr>
     </tbody>
   </table>
-  <p style="font-size:12px">Seeded: Family, Health, Professional, Personal</p>
 
   <h3>habits</h3>
   <table class="schema-table">
@@ -187,26 +170,77 @@ p { margin-bottom: 10px; color: var(--brown-light); }
     <tbody>
       <tr><td class="col-name">id <span class="badge pk">PK</span></td><td class="col-type">uuid</td><td class="col-desc">Primary key</td></tr>
       <tr><td class="col-name">name</td><td class="col-type">text</td><td class="col-desc">Habit name</td></tr>
-      <tr><td class="col-name">category_id <span class="badge fk">FK</span></td><td class="col-type">uuid</td><td class="col-desc">References habit_categories(id)</td></tr>
-      <tr><td class="col-name">description</td><td class="col-type">text</td><td class="col-desc">Free text — supports links and notes (nullable)</td></tr>
+      <tr><td class="col-name">category_id <span class="badge fk">FK</span></td><td class="col-type">uuid</td><td class="col-desc">→ habit_categories(id)</td></tr>
+      <tr><td class="col-name">description</td><td class="col-type">text</td><td class="col-desc">Free text, supports links (nullable)</td></tr>
       <tr><td class="col-name">frequency_type</td><td class="col-type">text</td><td class="col-desc">'daily' or 'weekly'</td></tr>
-      <tr><td class="col-name">weekly_target</td><td class="col-type">smallint</td><td class="col-desc">Times per week target (null for daily habits)</td></tr>
+      <tr><td class="col-name">weekly_target</td><td class="col-type">smallint</td><td class="col-desc">Times per week (null for daily)</td></tr>
       <tr><td class="col-name">is_active</td><td class="col-type">boolean</td><td class="col-desc">false = archived</td></tr>
-      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td class="col-desc">Auto-set on insert</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td class="col-desc">Auto-set</td></tr>
     </tbody>
   </table>
 
   <h3>habit_logs</h3>
+  <p>UNIQUE on (habit_id, log_date) — one completion per habit per day.</p>
   <table class="schema-table">
     <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
     <tbody>
       <tr><td class="col-name">id <span class="badge pk">PK</span></td><td class="col-type">uuid</td><td class="col-desc">Primary key</td></tr>
-      <tr><td class="col-name">habit_id <span class="badge fk">FK</span></td><td class="col-type">uuid</td><td class="col-desc">References habits(id)</td></tr>
+      <tr><td class="col-name">habit_id <span class="badge fk">FK</span></td><td class="col-type">uuid</td><td class="col-desc">→ habits(id)</td></tr>
       <tr><td class="col-name">log_date</td><td class="col-type">date</td><td class="col-desc">Date of completion</td></tr>
-      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td class="col-desc">Auto-set on insert</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td class="col-desc">Auto-set</td></tr>
     </tbody>
   </table>
-  <p style="font-size:12px">UNIQUE constraint on (habit_id, log_date) — one completion per habit per day.</p>
+
+  <h3>health_diary</h3>
+  <p>Daily health journal. One entry per day, upsert on save.</p>
+  <table class="schema-table">
+    <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td class="col-name">id <span class="badge pk">PK</span></td><td class="col-type">uuid</td><td class="col-desc">Primary key</td></tr>
+      <tr><td class="col-name">entry_date</td><td class="col-type">date</td><td class="col-desc">Date — UNIQUE</td></tr>
+      <tr><td class="col-name">rating</td><td class="col-type">smallint</td><td class="col-desc">1=Awful, 2=Poor, 3=OK, 4=Good, 5=Great</td></tr>
+      <tr><td class="col-name">feeling</td><td class="col-type">text</td><td class="col-desc">Physical/mental feeling (nullable)</td></tr>
+      <tr><td class="col-name">stressors</td><td class="col-type">text</td><td class="col-desc">Stressors (nullable)</td></tr>
+      <tr><td class="col-name">joy</td><td class="col-type">text</td><td class="col-desc">What brought joy (nullable)</td></tr>
+      <tr><td class="col-name">ailments</td><td class="col-type">text</td><td class="col-desc">Ailments being monitored (nullable)</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td class="col-desc">Auto-set</td></tr>
+    </tbody>
+  </table>
+
+  <h3>doctors</h3>
+  <p>Practice/provider directory.</p>
+  <table class="schema-table">
+    <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td class="col-name">id <span class="badge pk">PK</span></td><td class="col-type">uuid</td><td class="col-desc">Primary key</td></tr>
+      <tr><td class="col-name">practice_name</td><td class="col-type">text</td><td class="col-desc">Name of practice</td></tr>
+      <tr><td class="col-name">doctor_name</td><td class="col-type">text</td><td class="col-desc">Primary doctor</td></tr>
+      <tr><td class="col-name">specialty</td><td class="col-type">text</td><td class="col-desc">e.g. Primary Care (nullable)</td></tr>
+      <tr><td class="col-name">phone</td><td class="col-type">text</td><td class="col-desc">Formatted (555) 123-4567 (nullable)</td></tr>
+      <tr><td class="col-name">address</td><td class="col-type">text</td><td class="col-desc">Full street address (nullable)</td></tr>
+      <tr><td class="col-name">portal_url</td><td class="col-type">text</td><td class="col-desc">Patient portal URL (nullable)</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">text</td><td class="col-desc">General notes (nullable)</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td class="col-desc">Auto-set</td></tr>
+    </tbody>
+  </table>
+
+  <h3>appointments</h3>
+  <table class="schema-table">
+    <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td class="col-name">id <span class="badge pk">PK</span></td><td class="col-type">uuid</td><td class="col-desc">Primary key</td></tr>
+      <tr><td class="col-name">appt_date</td><td class="col-type">date</td><td class="col-desc">Date of appointment</td></tr>
+      <tr><td class="col-name">doctor_id <span class="badge fk">FK</span></td><td class="col-type">uuid</td><td class="col-desc">→ doctors(id)</td></tr>
+      <tr><td class="col-name">seen_by</td><td class="col-type">text</td><td class="col-desc">Override if not primary doctor (nullable)</td></tr>
+      <tr><td class="col-name">purpose</td><td class="col-type">text</td><td class="col-desc">Reason for visit (nullable)</td></tr>
+      <tr><td class="col-name">notes</td><td class="col-type">text</td><td class="col-desc">Post-visit notes (nullable)</td></tr>
+      <tr><td class="col-name">prescribed</td><td class="col-type">boolean</td><td class="col-desc">Was anything prescribed</td></tr>
+      <tr><td class="col-name">prescription_notes</td><td class="col-type">text</td><td class="col-desc">Prescription details (nullable)</td></tr>
+      <tr><td class="col-name">link_url</td><td class="col-type">text</td><td class="col-desc">Optional link (nullable)</td></tr>
+      <tr><td class="col-name">link_description</td><td class="col-type">text</td><td class="col-desc">Link label (nullable)</td></tr>
+      <tr><td class="col-name">created_at</td><td class="col-type">timestamptz</td><td class="col-desc">Auto-set</td></tr>
+    </tbody>
+  </table>
 
   <h2>Deployment Workflow</h2>
   <div class="card steps">
@@ -216,69 +250,73 @@ p { margin-bottom: 10px; color: var(--brown-light); }
       <li>Click the file → pencil icon to edit, or drag-and-drop to upload</li>
       <li>Add a short commit message → click <strong>Commit changes</strong></li>
       <li>Vercel auto-deploys in ~30 seconds</li>
-      <li>Verify at the Vercel URL</li>
       <li>For icon updates: remove app from home screen and re-add via Safari → Share → Add to Home Screen</li>
     </ol>
   </div>
 
   <h2>Feature Backlog</h2>
   <div class="card">
-
     <h3>Weight Tab</h3>
     <div class="backlog-item"><span class="tag tag-feature">Feature</span>5-week and 10-week forecast based on current rolling avg trend</div>
     <div class="backlog-item"><span class="tag tag-feature">Feature</span>Milestone projections — how long to hit incremental weight targets</div>
-    <div class="backlog-item"><span class="tag tag-feature">Feature</span>Unfreeze flow confirmation — verify changing frozen_target triggers daily drop correctly</div>
+    <div class="backlog-item"><span class="tag tag-feature">Feature</span>Unfreeze flow confirmation</div>
 
     <h3 style="margin-top:16px">Leg Tab</h3>
     <div class="backlog-item"><span class="tag tag-ux">UX</span>Chart tightness on mobile with dual y-axis labels</div>
-    <div class="backlog-item"><span class="tag tag-feature">Feature</span>Activity correlation analysis — surface patterns between sock/activity and measurements</div>
+    <div class="backlog-item"><span class="tag tag-feature">Feature</span>Activity correlation analysis</div>
 
-    <h3 style="margin-top:16px">Both Tabs</h3>
-    <div class="backlog-item"><span class="tag tag-ux">UX</span>Date input fields extending beyond panel frames on mobile (low priority)</div>
+    <h3 style="margin-top:16px">Diary Tab</h3>
+    <div class="backlog-item"><span class="tag tag-ux">UX</span>Date/rating fields overlapping on mobile (low priority)</div>
+
+    <h3 style="margin-top:16px">Doctors Tab</h3>
+    <div class="backlog-item"><span class="tag tag-feature">Feature</span>Track individual medications/prescriptions over time</div>
 
     <h3 style="margin-top:16px">Habits Tab</h3>
-    <div class="backlog-item"><span class="tag tag-feature">Feature</span>Edit earlier days in current week for weekly habits</div>
     <div class="backlog-item"><span class="tag tag-ux">UX</span>Streaks &amp; Progress — add visual element (e.g. bar chart)</div>
     <div class="backlog-item"><span class="tag tag-feature">Feature</span>Weekly habit descriptions — support markdown/links rendering</div>
-    <div class="backlog-item"><span class="tag tag-feature">Feature</span>Define "good" completion % threshold for weekly habits (where target &lt; 7x/week)</div>
+    <div class="backlog-item"><span class="tag tag-feature">Feature</span>Define "good" completion % threshold for weekly habits</div>
+
+    <h3 style="margin-top:16px">All Tabs</h3>
+    <div class="backlog-item"><span class="tag tag-ux">UX</span>Date input fields overflowing panel frames on mobile (low priority)</div>
+    <div class="backlog-item"><span class="tag tag-ux">UX</span>Dynamic font shrink not reducing enough on mobile (low priority)</div>
 
     <h3 style="margin-top:16px">Future Tabs</h3>
-    <div class="backlog-item"><span class="tag tag-feature">Feature</span>Push Up / Exercise logging tab</div>
     <div class="backlog-item"><span class="tag tag-feature">Feature</span>Exercises tab (PT regimen — groups, sets, reps, weights)</div>
-    <div class="backlog-item"><span class="tag tag-feature">Feature</span>Health Diary tab (weekly summary notes)</div>
-    <div class="backlog-item"><span class="tag tag-feature">Feature</span>Doctors tab</div>
 
     <h3 style="margin-top:16px">Security</h3>
     <div class="backlog-item"><span class="tag tag-security">Security</span>Row Level Security (RLS) on all Supabase tables</div>
-    <div class="backlog-item"><span class="tag tag-security">Security</span>UI access control (login/auth) — app currently open to anyone with the URL</div>
-    <div class="backlog-item"><span class="tag tag-security">Security</span>Supabase anon key exposure — addressed once RLS + auth in place</div>
+    <div class="backlog-item"><span class="tag tag-security">Security</span>Supabase anon key exposure — addressed once RLS in place</div>
   </div>
 
   <h2>Version History</h2>
   <div class="card">
     <div class="version-row">
       <div class="version-date">2026-06-27</div>
-      <div class="version-desc">Built reference doc, custom heart icon, added Reference tab to app. Full backlog documented.</div>
+      <div class="version-desc">Health Diary tab built (entry form, stats with two streak types, chart, recent log). Doctors tab built (Directory and Appointments subtabs, phone auto-formatting, appointment filters). Reference doc updated.</div>
+    </div>
+    <div class="version-row">
+      <div class="version-date">2026-06-27</div>
+      <div class="version-desc">Reference doc, heart icon, Reference tab, passphrase auth gate. Weight/leg tile checkboxes for independent save. Weight recent log unified date list. Food score chart shading on weight tab.</div>
     </div>
     <div class="version-row">
       <div class="version-date">2026-06-17</div>
-      <div class="version-desc">Habits tab — date selector, after-midnight fix (localToday), completion % in streaks table, color-coded stats. Leg tab weight trend colors. Weight tab vAvg/streak green when positive.</div>
+      <div class="version-desc">Habits date selector, localToday() timezone fix, completion % in streaks. Leg weight trend colors. Weight stat colors (green when good).</div>
     </div>
     <div class="version-row">
       <div class="version-date">2026-06-16</div>
-      <div class="version-desc">Warm cream theme (Option C). Food/behavior context added to weight tab. Leg form compacted. Habit chart shading colors fixed. Tap-and-hold description modal on habits.</div>
+      <div class="version-desc">Warm cream theme. Food/behavior context on weight tab. Leg form compacted. Activity shading colors. Tap-and-hold habit description modal.</div>
     </div>
     <div class="version-row">
       <div class="version-date">2026-06-15</div>
-      <div class="version-desc">Habits tab built — daily/weekly habits, tap to log/unlog, nudge indicators (green/amber/red/purple), streaks & progress. Admin subtabs (Config, Habits, Categories).</div>
+      <div class="version-desc">Habits tab — daily/weekly, log/unlog, nudge indicators, streaks & progress. Admin subtabs (Config, Habits, Categories).</div>
     </div>
     <div class="version-row">
       <div class="version-date">2026-06-14</div>
-      <div class="version-desc">Leg tab built — measurements, context (sock/activity), dual y-axis chart with activity background shading and sock dots. Bulk data load (376 measurement rows, 156 sock rows).</div>
+      <div class="version-desc">Leg tab — measurements, context, dual y-axis chart with activity shading and sock dots. Bulk data load.</div>
     </div>
     <div class="version-row">
       <div class="version-date">2026-06-13</div>
-      <div class="version-desc">Initial build. Weight tab with rolling avg, target, streak, 21-day chart, admin config. Bulk data load (1,419 rows from 2022–2026).</div>
+      <div class="version-desc">Initial build. Weight tab with rolling avg, target, streak, 21-day chart, admin config. Bulk data load (1,419 rows).</div>
     </div>
   </div>
 
