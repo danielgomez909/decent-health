@@ -1413,15 +1413,30 @@ function renderChart(rows) {
 }
 
 function renderTable(rows) {
-  const withWeight = rows
-    .filter(r => r.weight != null)
-    .slice()
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 30);
-
   const tbody = document.getElementById('weight-table-body');
 
-  if (!withWeight.length) {
+  // Build a unified date list from weight_logs (via rows) AND weight_context
+  // rows only contains dates with actual weight entries - we need to add context-only dates too
+  const rowMap = {};
+  rows.filter(r => r.weight != null).forEach(r => { rowMap[r.date] = r; });
+
+  const ctxMap = {};
+  weightContext.forEach(c => { ctxMap[c.context_date] = c; });
+
+  // Collect all dates that have either a weight entry or context for that day
+  // Context is stored for yesterday, so we look at context_date + 1 to find the "display date"
+  const allDates = new Set([
+    ...Object.keys(rowMap),
+    ...weightContext.map(c => {
+      const d = new Date(c.context_date + 'T12:00:00');
+      d.setDate(d.getDate() + 1);
+      return d.toISOString().split('T')[0];
+    })
+  ]);
+
+  const sorted = [...allDates].sort((a, b) => b.localeCompare(a)).slice(0, 30);
+
+  if (!sorted.length) {
     tbody.innerHTML = '<tr><td colspan="10" class="loading">No entries yet.</td></tr>';
     return;
   }
@@ -1436,32 +1451,36 @@ function renderTable(rows) {
   const foodLabel = s => s == null ? '—' : ['Good','Weak','Poor','Bad'][s] ?? s;
   const foodColor = s => s == null ? 'var(--text3)' : s === 0 ? 'var(--good)' : s === 1 ? 'var(--accent2)' : 'var(--danger)';
 
-  const ctxMap = {};
-  weightContext.forEach(c => { ctxMap[c.context_date] = c; });
-
-  tbody.innerHTML = withWeight.map(r => {
-    const d = new Date(r.date + 'T12:00:00');
+  tbody.innerHTML = sorted.map(date => {
+    const r = rowMap[date] || null;
+    const d = new Date(date + 'T12:00:00');
     const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-    const streakHtml = r.streak != null
+    const streakHtml = r?.streak != null
       ? '<span class="streak-badge ' + (r.streak > 0 ? 'streak-pos' : 'streak-neg') + '">'
         + (r.streak > 0 ? '+' : '') + r.streak + '</span>'
       : '—';
 
-    // Context is for the day before this weight entry
-    const prevDate = new Date(r.date + 'T12:00:00');
+    const prevDate = new Date(date + 'T12:00:00');
     prevDate.setDate(prevDate.getDate() - 1);
     const prevStr    = prevDate.toISOString().split('T')[0];
     const ctx        = ctxMap[prevStr];
-    const ctxDateStr = ctx ? prevDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
-    const foodHtml   = ctx
+    const ctxDateStr = ctx
+      ? prevDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      : '—';
+    const foodHtml = ctx
       ? '<span style="color:' + foodColor(ctx.food_score) + '">' + foodLabel(ctx.food_score) + '</span>'
       : '—';
 
-    return '<tr><td>' + dateStr + '</td><td>' + fmt(r.weight) + '</td><td>'
-      + fmt(r.avg) + '</td><td>' + fmtDiff(r.vsAvg) + '</td><td>'
-      + fmt(r.target) + '</td><td>' + fmtDiff(r.vsTarget) + '</td><td>'
-      + streakHtml + '</td><td style="color:var(--text3);font-size:12px">' + ctxDateStr + '</td><td>' + foodHtml + '</td>'
+    return '<tr><td>' + dateStr + '</td>'
+      + '<td>' + (r ? fmt(r.weight) : '—') + '</td>'
+      + '<td>' + (r ? fmt(r.avg)    : '—') + '</td>'
+      + '<td>' + (r ? fmtDiff(r.vsAvg)    : '—') + '</td>'
+      + '<td>' + (r ? fmt(r.target) : '—') + '</td>'
+      + '<td>' + (r ? fmtDiff(r.vsTarget) : '—') + '</td>'
+      + '<td>' + streakHtml + '</td>'
+      + '<td style="color:var(--text3);font-size:12px">' + ctxDateStr + '</td>'
+      + '<td>' + foodHtml + '</td>'
       + '<td style="text-align:left;color:var(--text2)">' + (ctx?.food_notes || '') + '</td></tr>';
   }).join('');
 }
