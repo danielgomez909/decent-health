@@ -211,6 +211,7 @@
   }
 
   .btn:hover { opacity: 0.85; }
+  .btn-danger { background: var(--danger); color: white; border-color: var(--danger); }
 
   .table-wrap { overflow-x: auto; }
 
@@ -595,6 +596,7 @@
     <button class="nav-btn" data-page="leg" onclick="showPage('leg', this)">Leg</button>
     <button class="nav-btn" data-page="habits" onclick="showPage('habits', this)">Habits</button>
     <button class="nav-btn" data-page="diary" onclick="showPage('diary', this)">Diary</button>
+    <button class="nav-btn" data-page="doctors" onclick="showPage('doctors', this)">Doctors</button>
     <button class="nav-btn" data-page="admin" onclick="showPage('admin', this)">Admin</button>
     <button class="nav-btn" data-page="reference" onclick="showPage('reference', this)">Ref</button>
   </nav>
@@ -1064,6 +1066,146 @@
             <tr><td colspan="6" class="loading">Loading…</td></tr>
           </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOCTORS PAGE -->
+  <div id="page-doctors" class="page">
+
+    <!-- Subtabs -->
+    <div class="subtab-nav">
+      <button class="subtab-btn active" onclick="showDoctorSubtab('directory', this)">Directory</button>
+      <button class="subtab-btn" onclick="showDoctorSubtab('appointments', this)">Appointments</button>
+    </div>
+
+    <!-- DIRECTORY SUBTAB -->
+    <div id="doctors-subtab-directory" class="subtab-panel active">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:13px;color:var(--text2)">Practices &amp; providers</div>
+        <button class="btn" onclick="showDoctorForm()">+ Add</button>
+      </div>
+      <div id="doctors-list"><div class="loading">Loading…</div></div>
+
+      <!-- Doctor form -->
+      <div id="doctor-form" style="display:none;margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px" id="doctor-form-title">Add Practice</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="form-group">
+              <label>Practice Name</label>
+              <input type="text" id="df-practice" class="panel-input" placeholder="e.g. Johnson City Medical" />
+            </div>
+            <div class="form-group">
+              <label>Doctor Name</label>
+              <input type="text" id="df-doctor" class="panel-input" placeholder="e.g. Dr. Jane Smith" />
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="form-group">
+              <label>Specialty</label>
+              <input type="text" id="df-specialty" class="panel-input" placeholder="e.g. Primary Care" />
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="text" id="df-phone" class="panel-input" placeholder="e.g. (555) 123-4567" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Address</label>
+            <input type="text" id="df-address" class="panel-input" placeholder="Full street address" />
+          </div>
+          <div class="form-group">
+            <label>Patient Portal URL</label>
+            <input type="text" id="df-portal" class="panel-input" placeholder="https://..." />
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <input type="text" id="df-notes" class="panel-input" placeholder="General notes" />
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn" onclick="saveDoctor()">Save</button>
+            <button class="btn" style="background:var(--surface2);color:var(--text)" onclick="hideDoctorForm()">Cancel</button>
+            <button class="btn btn-danger" id="df-delete-btn" style="display:none;margin-left:auto" onclick="deleteDoctor()">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- APPOINTMENTS SUBTAB -->
+    <div id="doctors-subtab-appointments" class="subtab-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:13px;color:var(--text2)">Appointment log</div>
+        <button class="btn" onclick="showApptForm()">+ Add</button>
+      </div>
+
+      <!-- Filters -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <select id="appt-filter-doctor" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:13px;padding:5px 8px;outline:none;flex:1;min-width:140px" onchange="renderApptList()">
+          <option value="">All practices</option>
+        </select>
+        <input type="date" id="appt-filter-from" class="panel-input" style="flex:1;min-width:120px" onchange="renderApptList()" placeholder="From" />
+        <input type="date" id="appt-filter-to" class="panel-input" style="flex:1;min-width:120px" onchange="renderApptList()" placeholder="To" />
+        <button class="btn" style="background:var(--surface2);color:var(--text2);font-size:12px;padding:5px 10px" onclick="clearApptFilters()">Clear</button>
+      </div>
+
+      <div id="appt-list"><div class="loading">Loading…</div></div>
+
+      <!-- Appointment form -->
+      <div id="appt-form" style="display:none;margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px" id="appt-form-title">Add Appointment</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="af-date" class="panel-input" />
+            </div>
+            <div class="form-group">
+              <label>Practice</label>
+              <select id="af-doctor" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:13px;padding:5px 8px;outline:none;width:100%">
+                <option value="">— select —</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Seen by (leave blank if primary doctor)</label>
+            <input type="text" id="af-seen-by" class="panel-input" placeholder="e.g. Dr. Sarah Jones, NP" />
+          </div>
+          <div class="form-group">
+            <label>Purpose of visit</label>
+            <input type="text" id="af-purpose" class="panel-input" placeholder="Reason for appointment" />
+          </div>
+          <div class="form-group">
+            <label>Notes (post-visit)</label>
+            <textarea id="af-notes" rows="3" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:13px;padding:6px 10px;outline:none;width:100%;resize:vertical" placeholder="Outcomes, follow-ups, observations"></textarea>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text);text-transform:none;letter-spacing:0;cursor:pointer">
+              <input type="checkbox" id="af-prescribed" style="width:14px;height:14px;accent-color:var(--accent)"> Something prescribed
+            </label>
+          </div>
+          <div id="af-prescribed-notes-group" style="display:none">
+            <div class="form-group">
+              <label>Prescription notes</label>
+              <input type="text" id="af-prescription-notes" class="panel-input" placeholder="e.g. Amoxicillin 500mg, 10 days" />
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="form-group">
+              <label>Link URL</label>
+              <input type="text" id="af-link-url" class="panel-input" placeholder="https://..." />
+            </div>
+            <div class="form-group">
+              <label>Link description</label>
+              <input type="text" id="af-link-desc" class="panel-input" placeholder="e.g. Lab results" />
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn" onclick="saveAppt()">Save</button>
+            <button class="btn" style="background:var(--surface2);color:var(--text)" onclick="hideApptForm()">Cancel</button>
+            <button class="btn btn-danger" id="af-delete-btn" style="display:none;margin-left:auto" onclick="deleteAppt()">Delete</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1597,7 +1739,8 @@ async function showPage(name, btn) {
   document.getElementById('page-' + name).classList.add('active');
   btn.classList.add('active');
   if (name === 'admin')     { await loadConfig(); await loadHabitsData(); renderAdmin(); }
-  if (name === 'diary') { setDefaultDiaryDate(); await loadDiaryEntries(); renderDiary(); }
+  if (name === 'diary')    { setDefaultDiaryDate(); await loadDiaryEntries(); renderDiary(); }
+  if (name === 'doctors') { await loadDoctorsData(); renderDoctorList(); populateApptFilterDoctors(); }
   // reference tab loads via iframe automatically
   if (name === 'leg')    { setDefaultLegDates(); await loadLegData(); renderLeg(); }
   if (name === 'habits') {
@@ -2899,6 +3042,262 @@ function renderDiaryTable() {
       <td style="text-align:left;color:var(--text2)">${e.ailments || ''}</td>
     </tr>`;
   }).join('');
+}
+
+// ── Doctors ───────────────────────────────────────
+let doctorsList  = [];
+let apptList     = [];
+let editingDoctorId = null;
+let editingApptId   = null;
+
+async function loadDoctorsData() {
+  const [docsRes, apptsRes] = await Promise.all([
+    sb.from('doctors').select('*').order('practice_name'),
+    sb.from('appointments').select('*').order('appt_date', { ascending: false })
+  ]);
+  if (docsRes.error)  { showToast('Error loading doctors', 'error'); return; }
+  if (apptsRes.error) { showToast('Error loading appointments', 'error'); return; }
+  doctorsList = docsRes.data  || [];
+  apptList    = apptsRes.data || [];
+}
+
+function showDoctorSubtab(name, btn) {
+  document.querySelectorAll('#page-doctors .subtab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#page-doctors .subtab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('doctors-subtab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'directory')    renderDoctorList();
+  if (name === 'appointments') { populateApptFilterDoctors(); renderApptList(); }
+}
+
+// ── Directory ─────────────────────────────────────
+function renderDoctorList() {
+  const el = document.getElementById('doctors-list');
+  if (!doctorsList.length) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px 0">No practices added yet.</div>';
+    return;
+  }
+  el.innerHTML = doctorsList.map(d => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">
+      <div style="display:flex;align-items:start;justify-content:space-between;gap:10px">
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:600;color:var(--text)">${esc(d.practice_name)}</div>
+          <div style="font-size:13px;color:var(--accent);margin-bottom:6px">${esc(d.doctor_name)}${d.specialty ? ' · ' + esc(d.specialty) : ''}</div>
+          ${d.phone    ? `<div style="font-size:12px;color:var(--text2);margin-bottom:2px">📞 ${esc(d.phone)}</div>` : ''}
+          ${d.address  ? `<div style="font-size:12px;color:var(--text2);margin-bottom:2px">📍 ${esc(d.address)}</div>` : ''}
+          ${d.portal_url ? `<div style="font-size:12px;margin-bottom:2px"><a href="${esc(d.portal_url)}" target="_blank" style="color:var(--accent)">Patient Portal</a></div>` : ''}
+          ${d.notes    ? `<div style="font-size:12px;color:var(--text3);margin-top:4px;font-style:italic">${esc(d.notes)}</div>` : ''}
+        </div>
+        <button onclick="showDoctorForm('${d.id}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--text2);flex-shrink:0">Edit</button>
+      </div>
+    </div>`).join('');
+}
+
+function showDoctorForm(id) {
+  editingDoctorId = id || null;
+  const d = id ? doctorsList.find(x => x.id === id) : null;
+  document.getElementById('doctor-form-title').textContent = d ? 'Edit Practice' : 'Add Practice';
+  document.getElementById('df-practice').value  = d?.practice_name || '';
+  document.getElementById('df-doctor').value    = d?.doctor_name   || '';
+  document.getElementById('df-specialty').value = d?.specialty     || '';
+  document.getElementById('df-phone').value     = d?.phone         || '';
+  document.getElementById('df-address').value   = d?.address       || '';
+  document.getElementById('df-portal').value    = d?.portal_url    || '';
+  document.getElementById('df-notes').value     = d?.notes         || '';
+  document.getElementById('df-delete-btn').style.display = d ? 'block' : 'none';
+  document.getElementById('doctor-form').style.display = 'block';
+  document.getElementById('doctor-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function hideDoctorForm() {
+  document.getElementById('doctor-form').style.display = 'none';
+  editingDoctorId = null;
+}
+
+async function saveDoctor() {
+  const practice = document.getElementById('df-practice').value.trim();
+  const doctor   = document.getElementById('df-doctor').value.trim();
+  if (!practice) { showToast('Practice name required', 'error'); return; }
+  if (!doctor)   { showToast('Doctor name required', 'error'); return; }
+
+  const payload = {
+    practice_name: practice,
+    doctor_name:   doctor,
+    specialty:     document.getElementById('df-specialty').value.trim() || null,
+    phone:         document.getElementById('df-phone').value.trim()     || null,
+    address:       document.getElementById('df-address').value.trim()   || null,
+    portal_url:    document.getElementById('df-portal').value.trim()    || null,
+    notes:         document.getElementById('df-notes').value.trim()     || null
+  };
+
+  let error;
+  if (editingDoctorId) {
+    ({ error } = await sb.from('doctors').update(payload).eq('id', editingDoctorId));
+  } else {
+    ({ error } = await sb.from('doctors').insert(payload));
+  }
+  if (error) { showToast('Error saving: ' + error.message, 'error'); return; }
+
+  showToast('Practice saved ✓', 'success');
+  hideDoctorForm();
+  await loadDoctorsData();
+  renderDoctorList();
+}
+
+async function deleteDoctor() {
+  if (!editingDoctorId) return;
+  const d = doctorsList.find(x => x.id === editingDoctorId);
+  if (!confirm('Delete "' + d?.practice_name + '"? This will also delete all appointments for this practice.')) return;
+  await sb.from('appointments').delete().eq('doctor_id', editingDoctorId);
+  const { error } = await sb.from('doctors').delete().eq('id', editingDoctorId);
+  if (error) { showToast('Error deleting', 'error'); return; }
+  showToast('Practice deleted', 'success');
+  hideDoctorForm();
+  await loadDoctorsData();
+  renderDoctorList();
+}
+
+// ── Appointments ──────────────────────────────────
+function populateApptFilterDoctors() {
+  const sel = document.getElementById('appt-filter-doctor');
+  sel.innerHTML = '<option value="">All practices</option>' +
+    doctorsList.map(d => `<option value="${d.id}">${esc(d.practice_name)}</option>`).join('');
+}
+
+function populateApptDoctorDropdown(selectedId) {
+  const sel = document.getElementById('af-doctor');
+  sel.innerHTML = '<option value="">— select —</option>' +
+    doctorsList.map(d => `<option value="${d.id}" ${d.id === selectedId ? 'selected' : ''}>${esc(d.practice_name)}</option>`).join('');
+}
+
+function clearApptFilters() {
+  document.getElementById('appt-filter-doctor').value = '';
+  document.getElementById('appt-filter-from').value   = '';
+  document.getElementById('appt-filter-to').value     = '';
+  renderApptList();
+}
+
+function renderApptList() {
+  const el = document.getElementById('appt-list');
+  const filterDoctor = document.getElementById('appt-filter-doctor').value;
+  const filterFrom   = document.getElementById('appt-filter-from').value;
+  const filterTo     = document.getElementById('appt-filter-to').value;
+
+  const docMap = {};
+  doctorsList.forEach(d => { docMap[d.id] = d; });
+
+  let filtered = [...apptList];
+  if (filterDoctor) filtered = filtered.filter(a => a.doctor_id === filterDoctor);
+  if (filterFrom)   filtered = filtered.filter(a => a.appt_date >= filterFrom);
+  if (filterTo)     filtered = filtered.filter(a => a.appt_date <= filterTo);
+
+  if (!filtered.length) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px 0">No appointments found.</div>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(a => {
+    const doc = docMap[a.doctor_id];
+    const d = new Date(a.appt_date + 'T12:00:00');
+    const dateStr = d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+    const seenBy = a.seen_by || doc?.doctor_name || '';
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">
+      <div style="display:flex;align-items:start;justify-content:space-between;gap:10px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-size:13px;font-weight:600;color:var(--text)">${dateStr}</span>
+            <span style="font-size:12px;color:var(--accent)">${esc(doc?.practice_name || '—')}</span>
+            ${a.prescribed ? '<span style="font-size:11px;background:rgba(194,98,63,0.12);color:var(--accent);padding:1px 7px;border-radius:20px">Rx</span>' : ''}
+          </div>
+          ${seenBy ? `<div style="font-size:12px;color:var(--text2);margin-bottom:3px">Seen by: ${esc(seenBy)}</div>` : ''}
+          ${a.purpose ? `<div style="font-size:12px;color:var(--text2);margin-bottom:3px"><strong>Purpose:</strong> ${esc(a.purpose)}</div>` : ''}
+          ${a.notes   ? `<div style="font-size:12px;color:var(--text2);margin-bottom:3px"><strong>Notes:</strong> ${esc(a.notes)}</div>` : ''}
+          ${a.prescribed && a.prescription_notes ? `<div style="font-size:12px;color:var(--text2);margin-bottom:3px"><strong>Rx:</strong> ${esc(a.prescription_notes)}</div>` : ''}
+          ${a.link_url ? `<div style="font-size:12px;margin-top:4px"><a href="${esc(a.link_url)}" target="_blank" style="color:var(--accent)">${esc(a.link_description || a.link_url)}</a></div>` : ''}
+        </div>
+        <button onclick="showApptForm('${a.id}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--text2);flex-shrink:0">Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showApptForm(id) {
+  editingApptId = id || null;
+  const a = id ? apptList.find(x => x.id === id) : null;
+  document.getElementById('appt-form-title').textContent = a ? 'Edit Appointment' : 'Add Appointment';
+  document.getElementById('af-date').value              = a?.appt_date || localToday();
+  document.getElementById('af-seen-by').value           = a?.seen_by           || '';
+  document.getElementById('af-purpose').value           = a?.purpose           || '';
+  document.getElementById('af-notes').value             = a?.notes             || '';
+  document.getElementById('af-prescribed').checked      = a?.prescribed        || false;
+  document.getElementById('af-prescription-notes').value = a?.prescription_notes || '';
+  document.getElementById('af-link-url').value          = a?.link_url          || '';
+  document.getElementById('af-link-desc').value         = a?.link_description  || '';
+  document.getElementById('af-delete-btn').style.display = a ? 'block' : 'none';
+  document.getElementById('af-prescribed-notes-group').style.display = a?.prescribed ? 'block' : 'none';
+  populateApptDoctorDropdown(a?.doctor_id);
+  document.getElementById('appt-form').style.display = 'block';
+  document.getElementById('appt-form').scrollIntoView({ behavior: 'smooth' });
+
+  // Wire prescribed toggle
+  document.getElementById('af-prescribed').onchange = function() {
+    document.getElementById('af-prescribed-notes-group').style.display = this.checked ? 'block' : 'none';
+  };
+}
+
+function hideApptForm() {
+  document.getElementById('appt-form').style.display = 'none';
+  editingApptId = null;
+}
+
+async function saveAppt() {
+  const dateVal  = document.getElementById('af-date').value;
+  const doctorId = document.getElementById('af-doctor').value;
+  if (!dateVal)   { showToast('Date required', 'error'); return; }
+  if (!doctorId)  { showToast('Please select a practice', 'error'); return; }
+
+  const prescribed = document.getElementById('af-prescribed').checked;
+  const payload = {
+    appt_date:          dateVal,
+    doctor_id:          doctorId,
+    seen_by:            document.getElementById('af-seen-by').value.trim()            || null,
+    purpose:            document.getElementById('af-purpose').value.trim()            || null,
+    notes:              document.getElementById('af-notes').value.trim()              || null,
+    prescribed,
+    prescription_notes: prescribed ? (document.getElementById('af-prescription-notes').value.trim() || null) : null,
+    link_url:           document.getElementById('af-link-url').value.trim()           || null,
+    link_description:   document.getElementById('af-link-desc').value.trim()          || null
+  };
+
+  let error;
+  if (editingApptId) {
+    ({ error } = await sb.from('appointments').update(payload).eq('id', editingApptId));
+  } else {
+    ({ error } = await sb.from('appointments').insert(payload));
+  }
+  if (error) { showToast('Error saving: ' + error.message, 'error'); return; }
+
+  showToast('Appointment saved ✓', 'success');
+  hideApptForm();
+  await loadDoctorsData();
+  populateApptFilterDoctors();
+  renderApptList();
+}
+
+async function deleteAppt() {
+  if (!editingApptId) return;
+  if (!confirm('Delete this appointment? Cannot be undone.')) return;
+  const { error } = await sb.from('appointments').delete().eq('id', editingApptId);
+  if (error) { showToast('Error deleting', 'error'); return; }
+  showToast('Appointment deleted', 'success');
+  hideApptForm();
+  await loadDoctorsData();
+  renderApptList();
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── Auth ─────────────────────────────────────────
