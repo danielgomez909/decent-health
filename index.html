@@ -993,15 +993,22 @@ async function initApp() {
 }
 
 function setDefaultDate() {
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('entry-date').value = today;
-  document.getElementById('entry-date').max = today;
+  const today = new Date();
+  const todayStr = today.getFullYear() + '-' +
+    String(today.getMonth()+1).padStart(2,'0') + '-' +
+    String(today.getDate()).padStart(2,'0');
+
+  document.getElementById('entry-date').value = todayStr;
+  document.getElementById('entry-date').max   = todayStr;
 
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  const yStr = yesterday.toISOString().split('T')[0];
+  const yStr = yesterday.getFullYear() + '-' +
+    String(yesterday.getMonth()+1).padStart(2,'0') + '-' +
+    String(yesterday.getDate()).padStart(2,'0');
+
   const ctxEl = document.getElementById('ctx-date');
-  if (ctxEl) { ctxEl.value = yStr; ctxEl.max = today; }
+  if (ctxEl) { ctxEl.value = yStr; ctxEl.max = todayStr; }
 }
 
 // ── Config ────────────────────────────────────────────────
@@ -1035,43 +1042,45 @@ async function loadLogs() {
 
 
 async function saveWeight() {
-  const dateVal   = document.getElementById('entry-date').value;
-  const wtVal     = parseFloat(document.getElementById('entry-weight').value);
-  const ctxDate   = document.getElementById('ctx-date')?.value;
-  const foodScore = document.getElementById('ctx-food-score')?.value;
-  const foodNotes = document.getElementById('ctx-notes')?.value?.trim();
+  const dateVal     = document.getElementById('entry-date').value;
+  const wtVal       = parseFloat(document.getElementById('entry-weight').value);
+  const ctxDate     = document.getElementById('ctx-date')?.value;
+  const foodScore   = document.getElementById('ctx-food-score')?.value;
+  const foodNotes   = document.getElementById('ctx-notes')?.value?.trim();
+  const saveWtTile  = document.getElementById('save-weight-tile')?.checked !== false;
+  const saveCtxTile = document.getElementById('save-ctx-tile')?.checked !== false;
 
-  if (!dateVal) { showToast('Please select a date', 'error'); return; }
-  if (isNaN(wtVal) || wtVal < 100 || wtVal > 500) {
-    showToast('Please enter a valid weight (100-500)', 'error'); return;
+  const saveOps = [];
+
+  if (saveWtTile) {
+    if (!dateVal) { showToast('Please select a weight date', 'error'); return; }
+    if (isNaN(wtVal) || wtVal < 100 || wtVal > 500) { showToast('Please enter a valid weight (100-500)', 'error'); return; }
+    saveOps.push(sb.from('weight_logs').upsert({ log_date: dateVal, weight: wtVal }, { onConflict: 'log_date' }));
   }
 
-  const saveOps = [
-    sb.from('weight_logs').upsert({ log_date: dateVal, weight: wtVal }, { onConflict: 'log_date' })
-  ];
-
-  if (ctxDate) {
-    saveOps.push(
-      sb.from('weight_context').upsert({
-        context_date: ctxDate,
-        food_score: foodScore !== '' && foodScore != null ? parseInt(foodScore) : null,
-        food_notes: foodNotes || null
-      }, { onConflict: 'context_date' })
-    );
+  if (saveCtxTile && ctxDate) {
+    saveOps.push(sb.from('weight_context').upsert({
+      context_date: ctxDate,
+      food_score: foodScore !== '' && foodScore != null ? parseInt(foodScore) : null,
+      food_notes: foodNotes || null
+    }, { onConflict: 'context_date' }));
   }
+
+  if (!saveOps.length) { showToast('Nothing to save — check at least one tile', 'error'); return; }
 
   const results = await Promise.all(saveOps);
   const failed  = results.find(r => r.error);
   if (failed) { showToast('Error: ' + failed.error.message, 'error'); return; }
 
   showToast('Saved ✓', 'success');
-  document.getElementById('entry-weight').value = '';
-  if (document.getElementById('ctx-food-score')) document.getElementById('ctx-food-score').value = '';
-  if (document.getElementById('ctx-notes')) document.getElementById('ctx-notes').value = '';
+  if (saveWtTile) document.getElementById('entry-weight').value = '';
+  if (saveCtxTile) {
+    if (document.getElementById('ctx-food-score')) document.getElementById('ctx-food-score').value = '';
+    if (document.getElementById('ctx-notes')) document.getElementById('ctx-notes').value = '';
+  }
   await loadLogs();
   renderAll();
 }
-
 
 // ── Calculations ──────────────────────────────────────────
 function buildRows() {
@@ -1847,30 +1856,44 @@ function renderLegChart() {
 function renderLegTable() {
   const tbody = document.getElementById('leg-table-body');
 
-  // Build joined rows: leg_logs left joined with leg_context
-  // context_date = log_date - 1 day
+  // Build unified date list from both legLogs and legContext
+  const logMap = {};
+  legLogs.forEach(l => { logMap[l.log_date] = l; });
   const ctxMap = {};
   legContext.forEach(c => { ctxMap[c.context_date] = c; });
 
-  const rows = [...legLogs].reverse().slice(0, 30).map(l => {
-    // Find context for the day before this measurement
-    const prevDate = new Date(l.log_date + 'T12:00:00');
-    prevDate.setDate(prevDate.getDate() - 1);
-    const prevStr = prevDate.toISOString().split('T')[0];
-    const ctx = ctxMap[prevStr] || null;
+  // Collect all unique dates from either table
+  const allDates = new Set([
+    ...legLogs.map(l => l.log_date),
+    // For context, show on the measurement date (context_date + 1 day)
+    ...legContext.map(c => {
+      const d = new Date(c.context_date + 'T12:00:00');
+      d.setDate(d.getDate() + 1);
+      return d.toISOString().split('T')[0];
+    })
+  ]);
 
-    // Weight trend: compare rolling avg for log_date vs day before
-    const todayAvg = getWeightAvgForDate(l.log_date);
-    const prevAvg  = getWeightAvgForDate(prevStr);
-    let trend = '—';
-    if (todayAvg != null && prevAvg != null) {
-      if (todayAvg < prevAvg) trend = '<span style="color:var(--good)">↓</span>';
-      else if (todayAvg > prevAvg) trend = '<span style="color:var(--danger)">↑</span>';
-      else trend = '<span style="color:var(--text3)">→</span>';
-    }
+  const rows = [...allDates]
+    .sort((a, b) => b.localeCompare(a))
+    .slice(0, 30)
+    .map(measDate => {
+      const l = logMap[measDate] || null;
+      const prevDate = new Date(measDate + 'T12:00:00');
+      prevDate.setDate(prevDate.getDate() - 1);
+      const prevStr = prevDate.toISOString().split('T')[0];
+      const ctx = ctxMap[prevStr] || null;
 
-    return { log: l, ctx, prevStr, trend };
-  });
+      const todayAvg = getWeightAvgForDate(measDate);
+      const prevAvg  = getWeightAvgForDate(prevStr);
+      let trend = '—';
+      if (todayAvg != null && prevAvg != null) {
+        if (todayAvg < prevAvg) trend = '<span style="color:var(--good)">↓</span>';
+        else if (todayAvg > prevAvg) trend = '<span style="color:var(--danger)">↑</span>';
+        else trend = '<span style="color:var(--text3)">→</span>';
+      }
+
+      return { log: l, ctx, measDate, prevStr, trend };
+    });
 
   if (!rows.length) {
     tbody.innerHTML = '<tr><td colspan="9" class="loading">No entries yet.</td></tr>';
@@ -1878,13 +1901,15 @@ function renderLegTable() {
   }
 
   const activityLabel = s => s == null ? '—' : s === 0 ? 'Good' : s === 1 ? 'Mixed' : 'Difficult';
-  const activityColor = s => s == null ? 'var(--text3)' : s === 0 ? 'var(--accent)' : s === 1 ? 'var(--accent2)' : 'var(--danger)';
+  const activityColor = s => s == null ? 'var(--text3)' : s === 0 ? 'var(--good)' : s === 1 ? 'var(--accent2)' : 'var(--danger)';
 
-  tbody.innerHTML = rows.map(({ log, ctx, prevStr, trend }) => {
-    const measDate = new Date(log.log_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    const ctxDate  = new Date(prevStr + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    const diff = (log.right_ankle - log.left_ankle).toFixed(2);
-    const diffColor = parseFloat(diff) > 1.5 ? 'var(--danger)' : parseFloat(diff) > 0.75 ? 'var(--accent2)' : 'var(--accent)';
+  tbody.innerHTML = rows.map(({ log, ctx, measDate, prevStr, trend }) => {
+    const measDateStr = new Date(measDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const ctxDateStr  = new Date(prevStr + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const right = log ? parseFloat(log.right_ankle) : null;
+    const left  = log ? parseFloat(log.left_ankle)  : null;
+    const diff  = right != null && left != null ? (right - left).toFixed(2) : null;
+    const diffColor = diff == null ? 'var(--text3)' : parseFloat(diff) > 1.5 ? 'var(--danger)' : parseFloat(diff) > 0.75 ? 'var(--accent2)' : 'var(--good)';
 
     const sockHtml = ctx != null
       ? `<span style="color:${ctx.wore_sock === 1 ? 'var(--accent)' : 'var(--text3)'}">${ctx.wore_sock === 1 ? 'Yes' : 'No'}</span>`
@@ -1894,12 +1919,12 @@ function renderLegTable() {
       : '—';
 
     return `<tr>
-      <td>${measDate}</td>
-      <td>${parseFloat(log.right_ankle).toFixed(2)}</td>
-      <td>${parseFloat(log.left_ankle).toFixed(2)}</td>
-      <td style="color:${diffColor}">${diff}</td>
+      <td>${measDateStr}</td>
+      <td>${right != null ? right.toFixed(2) : '—'}</td>
+      <td>${left  != null ? left.toFixed(2)  : '—'}</td>
+      <td style="color:${diffColor}">${diff ?? '—'}</td>
       <td>${trend}</td>
-      <td>${ctxDate}</td>
+      <td>${ctxDateStr}</td>
       <td>${sockHtml}</td>
       <td>${actHtml}</td>
       <td style="text-align:left;color:var(--text2)">${ctx?.activity_notes || ''}</td>
