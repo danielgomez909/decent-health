@@ -2637,7 +2637,14 @@ function renderHabitStreaks(activeHabits, catMap, today, weekStart, weekEnd) {
       String(windowFrom.getDate()).padStart(2,'0');
     const windowLogs = habitLogs.filter(l => l.habit_id === h.id && l.log_date >= windowFromStr);
 
-    const pct = Math.round((windowLogs.length / avgDays) * 100);
+    let pct;
+    if (h.frequency_type === 'daily') {
+      pct = Math.round((windowLogs.length / avgDays) * 100);
+    } else {
+      const target = h.weekly_target || 1;
+      const avgPerWeek = (windowLogs.length / avgDays) * 7;
+      pct = Math.round((avgPerWeek / target) * 100);
+    }
     const pctColor = pct >= 80 ? 'var(--good)' : pct >= 50 ? 'var(--accent2)' : 'var(--danger)';
 
     html += `<tr>
