@@ -2331,7 +2331,7 @@ function renderHabits() {
 
   // Render daily
   const dailyHabits = activeHabits.filter(h => h.frequency_type === 'daily');
-  renderHabitGroup('daily-habits-list', dailyHabits, byCategory, todayLogs, weekLogCounts, daysLeft, today, catMap, 'daily');
+  renderHabitGroup('daily-habits-list', dailyHabits, byCategory, todayLogs, weekLogCounts, daysLeft, today, catMap, 'daily', weekStart);
 
   // Render weekly
   const weeklyHabits = activeHabits.filter(h => h.frequency_type === 'weekly');
