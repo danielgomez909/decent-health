@@ -2608,9 +2608,19 @@ function renderHabitStreaks(activeHabits, catMap, today, weekStart, weekEnd) {
   html += '</tr></thead><tbody>';
 
   sorted.forEach(h => {
-    const streak = h.frequency_type === 'daily'
-      ? calcDailyStreak(h.id, today) + 'd'
-      : calcWeeklyStreak(h.id, today) + 'wk';
+    let streak;
+    if (h.frequency_type === 'daily') {
+      const todayLogged = habitLogs.some(l => l.habit_id === h.id && l.log_date === today);
+      let streakAsOf = today;
+      if (!todayLogged) {
+        const y = new Date(today + 'T12:00:00');
+        y.setDate(y.getDate() - 1);
+        streakAsOf = y.toISOString().split('T')[0];
+      }
+      streak = calcDailyStreak(h.id, streakAsOf) + 'd' + (todayLogged ? '' : ' ⚡');
+    } else {
+      streak = calcWeeklyStreak(h.id, today) + 'wk';
+    }
 
     const weekCount  = habitLogs.filter(l => l.habit_id === h.id && l.log_date >= weekStart && l.log_date <= weekEnd).length;
     const weekTarget = h.frequency_type === 'daily' ? 7 : (h.weekly_target || 1);
