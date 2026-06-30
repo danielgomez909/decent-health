@@ -2335,7 +2335,7 @@ function renderHabits() {
 
   // Render weekly
   const weeklyHabits = activeHabits.filter(h => h.frequency_type === 'weekly');
-  renderHabitGroup('weekly-habits-list', weeklyHabits, byCategory, todayLogs, weekLogCounts, daysLeft, today, catMap, 'weekly');
+  renderHabitGroup('weekly-habits-list', weeklyHabits, byCategory, todayLogs, weekLogCounts, daysLeft, today, catMap, 'weekly', weekStart);
 
   // Render streaks
   renderHabitStreaks(activeHabits, catMap, today, weekStart, weekEnd);
@@ -2675,20 +2675,10 @@ function renderHabitStreaks(activeHabits, catMap, today, weekStart, weekEnd) {
     if (h.frequency_type === 'daily') {
       pct = Math.round((windowLogs.length / avgDays) * 100);
     } else {
-      // Count weeks in window where target was met
-      const weeksInWindow = Math.ceil(avgDays / 7);
-      let weeksmet = 0;
-      for (let w = 0; w < weeksInWindow; w++) {
-        const wEnd = new Date();
-        wEnd.setDate(wEnd.getDate() - (w * 7));
-        const wEndStr = wEnd.toISOString().split('T')[0];
-        const wStart = new Date(wEnd);
-        wStart.setDate(wStart.getDate() - 6);
-        const wStartStr = wStart.toISOString().split('T')[0];
-        const wCount = windowLogs.filter(l => l.log_date >= wStartStr && l.log_date <= wEndStr).length;
-        if (wCount >= (h.weekly_target || 1)) weeksmet++;
-      }
-      pct = Math.round((weeksmet / weeksInWindow) * 100);
+      // Average completions per 7-day period in window, as a % of weekly target
+      const target = h.weekly_target || 1;
+      const avgPerWeek = (windowLogs.length / avgDays) * 7;
+      pct = Math.round((avgPerWeek / target) * 100);
     }
     const pctColor = pct >= 80 ? 'var(--good)' : pct >= 50 ? 'var(--accent2)' : 'var(--danger)';
 
