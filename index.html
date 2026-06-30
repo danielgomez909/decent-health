@@ -2404,6 +2404,25 @@ function renderHabitGroup(containerId, filteredHabits, byCategory, todayLogs, we
         const nudgeLabel = remaining === 0 ? '✓ Done' : remaining + ' left';
         const loggedToday = todayLogs.has(h.id);
 
+        // Weekly shading - derive week boundaries locally from 'today' param (no signature change)
+        const wkStart = getWeekStart(today);
+        const prevWeekEndDate = new Date(wkStart + 'T12:00:00');
+        prevWeekEndDate.setDate(prevWeekEndDate.getDate() - 1);
+        const prevWeekEndStr = prevWeekEndDate.toISOString().split('T')[0];
+        const prevWeekStartStr = getWeekStart(prevWeekEndStr);
+        const prevWeekCount = habitLogs.filter(l => l.habit_id === h.id && l.log_date >= prevWeekStartStr && l.log_date <= prevWeekEndStr).length;
+        const metLastWeek = prevWeekCount >= target;
+        const metThisWeek = count >= target;
+
+        let weekNameBg = 'transparent';
+        if (metThisWeek) {
+          weekNameBg = 'rgba(34,197,94,0.18)';
+        } else if (metLastWeek) {
+          weekNameBg = 'rgba(234,179,8,0.22)';
+        } else {
+          weekNameBg = 'rgba(220,38,38,0.18)';
+        }
+
         // Pips
         let pips = '';
         for (let i = 0; i < target; i++) {
@@ -2412,7 +2431,7 @@ function renderHabitGroup(containerId, filteredHabits, byCategory, todayLogs, we
 
         html += `<div class="habit-row ${loggedToday ? 'completed' : ''}" data-habit-id="${h.id}" data-today="${today}" data-type="weekly">
           <div class="habit-check ${loggedToday ? 'done' : ''}" data-check="true">${loggedToday ? '✓' : ''}</div>
-          <div class="habit-name">${h.name}</div>
+          <div class="habit-name" style="background:${weekNameBg};border-radius:6px;padding:2px 6px">${h.name}</div>
           <div class="weekly-progress">
             <div class="weekly-pips">${pips}</div>
             <span class="nudge ${nudge}">${nudgeLabel}</span>
