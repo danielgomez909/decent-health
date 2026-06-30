@@ -2331,11 +2331,11 @@ function renderHabits() {
 
   // Render daily
   const dailyHabits = activeHabits.filter(h => h.frequency_type === 'daily');
-  renderHabitGroup('daily-habits-list', dailyHabits, byCategory, todayLogs, weekLogCounts, daysLeft, today, catMap, 'daily', weekStart);
+  renderHabitGroup('daily-habits-list', dailyHabits, byCategory, todayLogs, weekLogCounts, daysLeft, today, catMap, 'daily');
 
   // Render weekly
   const weeklyHabits = activeHabits.filter(h => h.frequency_type === 'weekly');
-  renderHabitGroup('weekly-habits-list', weeklyHabits, byCategory, todayLogs, weekLogCounts, daysLeft, today, catMap, 'weekly', weekStart);
+  renderHabitGroup('weekly-habits-list', weeklyHabits, byCategory, todayLogs, weekLogCounts, daysLeft, today, catMap, 'weekly');
 
   // Render streaks
   renderHabitStreaks(activeHabits, catMap, today, weekStart, weekEnd);
@@ -2369,35 +2369,9 @@ function renderHabitGroup(containerId, filteredHabits, byCategory, todayLogs, we
     habits.forEach(h => {
       if (h.frequency_type === 'daily') {
         const done = todayLogs.has(h.id);
-
-        // Shading logic
-        const yesterday = new Date(today + 'T12:00:00');
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yStr = yesterday.toISOString().split('T')[0];
-        const loggedYesterday = habitLogs.some(l => l.habit_id === h.id && l.log_date === yStr);
-        const hasAnyLog = habitLogs.some(l => l.habit_id === h.id);
-
-        let nameBg = 'transparent';
-        if (done) {
-          nameBg = 'rgba(34,197,94,0.18)';        // green - logged today
-        } else if (loggedYesterday) {
-          nameBg = 'rgba(234,179,8,0.22)';         // amber - streak at risk
-        } else if (hasAnyLog) {
-          nameBg = 'rgba(220,38,38,0.18)';         // red - no active streak
-        }
-        // no shading if brand new habit with no history
-
-        // Streak: use yesterday's streak if not logged today, today's if logged
-        const streakDate = done ? today : yStr;
-        const streak = calcDailyStreak(h.id, streakDate);
-        const streakLabel = streak > 0 ? (done ? streak + 'd' : streak + 'd ⚡') : '';
-
         html += `<div class="habit-row ${done ? 'completed' : ''}" data-habit-id="${h.id}" data-today="${today}" data-type="daily">
           <div class="habit-check ${done ? 'done' : ''}" data-check="true">${done ? '✓' : ''}</div>
-          <div class="habit-name" style="background:${nameBg};border-radius:6px;padding:2px 6px;flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px">
-            <span>${h.name}</span>
-            ${streakLabel ? `<span style="font-size:11px;color:var(--text3);font-weight:500;flex-shrink:0">${streakLabel}</span>` : ''}
-          </div>
+          <div class="habit-name">${h.name}</div>
         </div>`;
       } else {
         const count     = weekLogCounts[h.id] || 0;
@@ -2407,31 +2381,6 @@ function renderHabitGroup(containerId, filteredHabits, byCategory, todayLogs, we
         const nudgeLabel = remaining === 0 ? '✓ Done' : remaining + ' left';
         const loggedToday = todayLogs.has(h.id);
 
-        // Weekly shading logic
-        const prevWeekStart = new Date(weekStart + 'T12:00:00');
-        prevWeekStart.setDate(prevWeekStart.getDate() - 7);
-        const prevWeekStartStr = prevWeekStart.toISOString().split('T')[0];
-        const prevWeekEnd = new Date(weekStart + 'T12:00:00');
-        prevWeekEnd.setDate(prevWeekEnd.getDate() - 1);
-        const prevWeekEndStr = prevWeekEnd.toISOString().split('T')[0];
-        const prevWeekCount = habitLogs.filter(l => l.habit_id === h.id && l.log_date >= prevWeekStartStr && l.log_date <= prevWeekEndStr).length;
-        const metLastWeek = prevWeekCount >= target;
-        const metThisWeek = count >= target;
-        const hasAnyWeekLog = habitLogs.some(l => l.habit_id === h.id);
-
-        let weekNameBg = 'transparent';
-        if (metThisWeek) {
-          weekNameBg = 'rgba(34,197,94,0.18)';    // green - met this week
-        } else if (metLastWeek) {
-          weekNameBg = 'rgba(234,179,8,0.22)';     // amber - met last week, not yet this week
-        } else if (hasAnyWeekLog) {
-          weekNameBg = 'rgba(220,38,38,0.18)';     // red - no streak
-        }
-
-        // Weekly streak: use last week if this week not met yet
-        const weekStreak = calcWeeklyStreak(h.id, metThisWeek ? today : prevWeekEndStr);
-        const weekStreakLabel = weekStreak > 0 ? weekStreak + 'wk' : '';
-
         // Pips
         let pips = '';
         for (let i = 0; i < target; i++) {
@@ -2440,10 +2389,7 @@ function renderHabitGroup(containerId, filteredHabits, byCategory, todayLogs, we
 
         html += `<div class="habit-row ${loggedToday ? 'completed' : ''}" data-habit-id="${h.id}" data-today="${today}" data-type="weekly">
           <div class="habit-check ${loggedToday ? 'done' : ''}" data-check="true">${loggedToday ? '✓' : ''}</div>
-          <div class="habit-name" style="background:${weekNameBg};border-radius:6px;padding:2px 6px;flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px">
-            <span>${h.name}</span>
-            ${weekStreakLabel ? `<span style="font-size:11px;color:var(--text3);font-weight:500;flex-shrink:0">${weekStreakLabel}</span>` : ''}
-          </div>div>
+          <div class="habit-name">${h.name}</div>
           <div class="weekly-progress">
             <div class="weekly-pips">${pips}</div>
             <span class="nudge ${nudge}">${nudgeLabel}</span>
@@ -2639,22 +2585,9 @@ function renderHabitStreaks(activeHabits, catMap, today, weekStart, weekEnd) {
   html += '</tr></thead><tbody>';
 
   sorted.forEach(h => {
-    // Show incoming streak if today not yet logged, current if logged
-    let streak;
-    if (h.frequency_type === 'daily') {
-      const todayLogged = habitLogs.some(l => l.habit_id === h.id && l.log_date === today);
-      const streakAsOf = todayLogged ? today : (() => {
-        const y = new Date(today + 'T12:00:00'); y.setDate(y.getDate()-1);
-        return y.toISOString().split('T')[0];
-      })();
-      streak = calcDailyStreak(h.id, streakAsOf) + 'd' + (todayLogged ? '' : ' ⚡');
-    } else {
-      const thisWeekMet = (weekLogCounts[h.id] || 0) >= (h.weekly_target || 1);
-      const prevWeekEnd = new Date(weekStart + 'T12:00:00');
-      prevWeekEnd.setDate(prevWeekEnd.getDate() - 1);
-      const streakAsOf = thisWeekMet ? today : prevWeekEnd.toISOString().split('T')[0];
-      streak = calcWeeklyStreak(h.id, streakAsOf) + 'wk' + (thisWeekMet ? '' : ' ⚡');
-    }
+    const streak = h.frequency_type === 'daily'
+      ? calcDailyStreak(h.id, today) + 'd'
+      : calcWeeklyStreak(h.id, today) + 'wk';
 
     const weekCount  = habitLogs.filter(l => l.habit_id === h.id && l.log_date >= weekStart && l.log_date <= weekEnd).length;
     const weekTarget = h.frequency_type === 'daily' ? 7 : (h.weekly_target || 1);
@@ -2671,15 +2604,7 @@ function renderHabitStreaks(activeHabits, catMap, today, weekStart, weekEnd) {
       String(windowFrom.getDate()).padStart(2,'0');
     const windowLogs = habitLogs.filter(l => l.habit_id === h.id && l.log_date >= windowFromStr);
 
-    let pct;
-    if (h.frequency_type === 'daily') {
-      pct = Math.round((windowLogs.length / avgDays) * 100);
-    } else {
-      // Average completions per 7-day period in window, as a % of weekly target
-      const target = h.weekly_target || 1;
-      const avgPerWeek = (windowLogs.length / avgDays) * 7;
-      pct = Math.round((avgPerWeek / target) * 100);
-    }
+    const pct = Math.round((windowLogs.length / avgDays) * 100);
     const pctColor = pct >= 80 ? 'var(--good)' : pct >= 50 ? 'var(--accent2)' : 'var(--danger)';
 
     html += `<tr>
