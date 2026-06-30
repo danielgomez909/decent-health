@@ -374,16 +374,16 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     margin-bottom: 6px;
-    cursor: pointer;
     transition: background 0.15s;
+    cursor: default;
   }
 
   .habit-row:hover { background: var(--surface2); }
   .habit-row.completed { opacity: 0.65; }
 
   .habit-check {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     border: 2px solid var(--border);
     flex-shrink: 0;
@@ -392,7 +392,11 @@
     justify-content: center;
     font-size: 13px;
     transition: all 0.15s;
+    cursor: pointer;
+    touch-action: manipulation;
   }
+
+  .habit-check:hover { border-color: var(--accent); }
 
   .habit-check.done {
     background: var(--good);
@@ -853,8 +857,9 @@
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <div style="font-family:var(--font-display);font-size:18px;color:var(--text)">Habits</div>
-      <div style="display:flex;align-items:center;gap:8px">
+      <div style="display:flex;align-items:center;gap:6px">
         <input type="date" id="habits-date" onchange="renderHabits()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:13px;padding:4px 8px;outline:none" />
+        <button onclick="refreshHabits()" title="Refresh" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:16px;cursor:pointer;color:var(--text2);line-height:1">↻</button>
       </div>
     </div>
     <div style="font-size:12px;color:var(--text3);margin-bottom:8px" id="habits-date-label"></div>
@@ -2365,7 +2370,7 @@ function renderHabitGroup(containerId, filteredHabits, byCategory, todayLogs, we
       if (h.frequency_type === 'daily') {
         const done = todayLogs.has(h.id);
         html += `<div class="habit-row ${done ? 'completed' : ''}" data-habit-id="${h.id}" data-today="${today}" data-type="daily">
-          <div class="habit-check ${done ? 'done' : ''}">${done ? '✓' : ''}</div>
+          <div class="habit-check ${done ? 'done' : ''}" data-check="true">${done ? '✓' : ''}</div>
           <div class="habit-name">${h.name}</div>
         </div>`;
       } else {
@@ -2383,7 +2388,7 @@ function renderHabitGroup(containerId, filteredHabits, byCategory, todayLogs, we
         }
 
         html += `<div class="habit-row ${loggedToday ? 'completed' : ''}" data-habit-id="${h.id}" data-today="${today}" data-type="weekly">
-          <div class="habit-check ${loggedToday ? 'done' : ''}">${loggedToday ? '✓' : ''}</div>
+          <div class="habit-check ${loggedToday ? 'done' : ''}" data-check="true">${loggedToday ? '✓' : ''}</div>
           <div class="habit-name">${h.name}</div>
           <div class="weekly-progress">
             <div class="weekly-pips">${pips}</div>
@@ -2402,11 +2407,12 @@ function attachHabitRowEvents(container) {
   container.querySelectorAll('.habit-row').forEach(row => {
     const habitId = row.dataset.habitId;
     const today   = row.dataset.today;
+    const circle  = row.querySelector('[data-check]');
     let holdTimer  = null;
     let didHold    = false;
     let touchActive = false;
 
-    // Touch events (mobile)
+    // Tap-and-hold on the WHOLE ROW shows description
     row.addEventListener('touchstart', e => {
       touchActive = true;
       didHold = false;
@@ -2422,11 +2428,10 @@ function attachHabitRowEvents(container) {
 
     row.addEventListener('touchend', () => {
       if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-      if (!didHold) toggleHabitLog(habitId, today, row);
       setTimeout(() => { touchActive = false; }, 300);
+      // Note: toggle is handled by circle only (below)
     });
 
-    // Mouse events (desktop) — skip if touch already handled it
     row.addEventListener('mousedown', () => {
       if (touchActive) return;
       didHold = false;
@@ -2439,13 +2444,42 @@ function attachHabitRowEvents(container) {
     row.addEventListener('mouseup', () => {
       if (touchActive) return;
       if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-      if (!didHold) toggleHabitLog(habitId, today, row);
     });
 
     row.addEventListener('mouseleave', () => {
       if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
     });
+
+    // Toggle ONLY on circle tap/click
+    if (circle) {
+      circle.addEventListener('touchstart', e => {
+        e.stopPropagation(); // prevent row hold timer
+        touchActive = true;
+        didHold = false;
+      }, { passive: true });
+
+      circle.addEventListener('touchend', e => {
+        e.stopPropagation();
+        if (!didHold) toggleHabitLog(habitId, today, row);
+        setTimeout(() => { touchActive = false; }, 300);
+      });
+
+      circle.addEventListener('click', e => {
+        if (touchActive) return;
+        e.stopPropagation();
+        toggleHabitLog(habitId, today, row);
+      });
+    }
   });
+}
+
+async function refreshHabits() {
+  const btn = document.querySelector('[onclick="refreshHabits()"]');
+  if (btn) { btn.style.opacity = '0.4'; btn.style.pointerEvents = 'none'; }
+  await loadHabitsData();
+  renderHabits();
+  if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = ''; }
+  showToast('Habits refreshed ✓', 'success');
 }
 
 function getNudgeClass(remaining, daysLeft) {
