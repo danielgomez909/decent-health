@@ -274,7 +274,6 @@ code { font-family: 'DM Mono', monospace; font-size: 12px; background: var(--cre
     <h3 style="margin-top:16px">Habits Tab</h3>
     <div class="backlog-item"><span class="tag tag-ux">UX</span>Streaks &amp; Progress — add visual element (e.g. bar chart)</div>
     <div class="backlog-item"><span class="tag tag-feature">Feature</span>Weekly habit descriptions — support markdown/links rendering</div>
-    <div class="backlog-item"><span class="tag tag-feature">Feature</span>Define "good" completion % threshold for weekly habits</div>
 
     <h3 style="margin-top:16px">All Tabs</h3>
     <div class="backlog-item"><span class="tag tag-ux">UX</span>Date input fields overflowing panel frames on mobile (low priority)</div>
@@ -290,6 +289,10 @@ code { font-family: 'DM Mono', monospace; font-size: 12px; background: var(--cre
 
   <h2>Version History</h2>
   <div class="card">
+    <div class="version-row">
+      <div class="version-date">2026-06-28</div>
+      <div class="version-desc">Habits tab: refresh button added, circle-only tap to toggle (full row tap-and-hold still shows description). Daily habit checklist rows and Streaks & Progress table show shading/incoming-streak signal (green=logged today, yellow=at risk, red=no active streak, ⚡=incoming streak). Weekly habit checklist rows shaded similarly based on this week vs last week target met (green/yellow/red), scoped to name text only. Weekly completion % recalculated as avg completions per week ÷ target.</div>
+    </div>
     <div class="version-row">
       <div class="version-date">2026-06-27</div>
       <div class="version-desc">Health Diary tab built (entry form, stats with two streak types, chart, recent log). Doctors tab built (Directory and Appointments subtabs, phone auto-formatting, appointment filters). Reference doc updated.</div>
