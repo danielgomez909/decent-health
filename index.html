@@ -1293,7 +1293,7 @@ async function loadLogs() {
   const fromDate = bufferDate.toISOString().split('T')[0];
 
   const [logsRes, ctxRes] = await Promise.all([
-    sb.from('weight_logs').select('log_date, weight').gte('log_date', fromDate).order('log_date', { ascending: true }),
+    sb.from('weight_logs').select('log_date, weight, target').gte('log_date', fromDate).order('log_date', { ascending: true }),
     sb.from('weight_context').select('*').gte('context_date', fromDate).order('context_date', { ascending: true })
   ]);
 
@@ -1318,7 +1318,26 @@ async function saveWeight() {
   if (saveWtTile) {
     if (!dateVal) { showToast('Please select a weight date', 'error'); return; }
     if (isNaN(wtVal) || wtVal < 100 || wtVal > 500) { showToast('Please enter a valid weight (100-500)', 'error'); return; }
-    saveOps.push(sb.from('weight_logs').upsert({ log_date: dateVal, weight: wtVal }, { onConflict: 'log_date' }));
+
+    // Calculate today's target based on most recent prior stored target
+    const frozen    = getVal('frozen_target', 235);
+    const commit    = getVal('commit', 0.25);
+    const dailyDrop = commit / 7;
+
+    // Find most recent stored target before today
+    const priorLogs = logs.filter(l => l.log_date < dateVal && l.target != null)
+                         .sort((a, b) => b.log_date.localeCompare(a.log_date));
+    let calculatedTarget = null;
+    if (priorLogs.length) {
+      const prevTarget = parseFloat(priorLogs[0].target);
+      const candidate  = prevTarget - dailyDrop;
+      calculatedTarget = candidate <= frozen ? frozen : candidate;
+    }
+
+    saveOps.push(sb.from('weight_logs').upsert(
+      { log_date: dateVal, weight: wtVal, target: calculatedTarget },
+      { onConflict: 'log_date' }
+    ));
   }
 
   if (saveCtxTile && ctxDate) {
@@ -1355,9 +1374,13 @@ function buildRows() {
 
   if (!logs.length) return [];
 
-  // Build date-keyed map of actual weights
-  const logMap = {};
-  logs.forEach(l => { logMap[l.log_date] = parseFloat(l.weight); });
+  // Build date-keyed maps for weights and stored targets
+  const logMap    = {};
+  const targetMap = {};
+  logs.forEach(l => {
+    logMap[l.log_date]    = parseFloat(l.weight);
+    if (l.target != null) targetMap[l.log_date] = parseFloat(l.target);
+  });
 
   // Date range: first log date → today + 7
   const startDate = new Date(logs[0].log_date + 'T00:00:00');
@@ -1373,27 +1396,37 @@ function buildRows() {
     cur.setDate(cur.getDate() + 1);
   }
 
-  // Build rows with target
-  // Target: starts at frozen, drops dailyDrop/day once > frozen, floors at goal
-  // Per spec: if prevTarget <= frozen → stay at frozen (frozen mode)
-  // Since we start at frozen and frozen mode keeps it there, it only drops
-  // when user raises frozen_target above current running target.
+  // Build rows — use stored target for past/today, project for future
+  // For today's stored target, find the most recent stored target before today
+  // to use as a basis for future projection
   const rows = [];
-  let prevTarget = null;
 
-  allDates.forEach(date => {
-    let target;
-    if (prevTarget === null) {
-      target = frozen;
-    } else if (prevTarget <= frozen) {
-      target = frozen;
+  // Find most recent stored target on or before today for future projection
+  const todayTargetStored = targetMap[todayStr] ?? null;
+  let futureBase = todayTargetStored;
+  if (futureBase == null) {
+    // Look back for most recent stored target
+    const pastDates = Object.keys(targetMap).filter(d => d <= todayStr).sort();
+    if (pastDates.length) futureBase = targetMap[pastDates[pastDates.length - 1]];
+  }
+
+  allDates.forEach((date, i) => {
+    const weight = logMap[date] !== undefined ? logMap[date] : null;
+    let target = null;
+
+    if (date <= todayStr) {
+      // Past or today: use stored target if available, else null
+      target = targetMap[date] ?? null;
     } else {
-      target = Math.max(goal, prevTarget - dailyDrop);
+      // Future: project from futureBase
+      if (futureBase != null) {
+        const daysAhead = Math.round((new Date(date + 'T12:00:00') - new Date(todayStr + 'T12:00:00')) / 86400000);
+        const candidate = futureBase - (dailyDrop * daysAhead);
+        target = candidate <= frozen ? frozen : candidate;
+      }
     }
 
-    const weight = logMap[date] !== undefined ? logMap[date] : null;
     rows.push({ date, weight, target, isFuture: weight === null });
-    prevTarget = target;
   });
 
   // Rolling average: date-windowed calculation for ALL rows (past and future)
