@@ -3223,8 +3223,8 @@ function renderDoctorList() {
         <div style="flex:1">
           <div style="font-size:15px;font-weight:600;color:var(--text)">${esc(d.practice_name)}</div>
           <div style="font-size:13px;color:var(--accent);margin-bottom:6px">${esc(d.doctor_name)}${d.specialty ? ' · ' + esc(d.specialty) : ''}</div>
-          ${d.phone    ? `<div style="font-size:12px;color:var(--text2);margin-bottom:2px">📞 ${esc(d.phone)}</div>` : ''}
-          ${d.address  ? `<div style="font-size:12px;color:var(--text2);margin-bottom:2px">📍 ${esc(d.address)}</div>` : ''}
+          ${d.phone    ? `<div style="font-size:12px;color:var(--text2);margin-bottom:2px">📞 <a href="tel:${esc(d.phone.replace(/[^0-9+]/g,''))}" style="color:var(--text2);text-decoration:none">${esc(d.phone)}</a></div>` : ''}
+          ${d.address  ? `<div style="font-size:12px;color:var(--text2);margin-bottom:2px">📍 <a href="https://maps.apple.com/?q=${encodeURIComponent(d.address)}" target="_blank" style="color:var(--text2);text-decoration:none">${esc(d.address)}</a></div>` : ''}
           ${d.portal_url ? `<div style="font-size:12px;margin-bottom:2px"><a href="${esc(d.portal_url)}" target="_blank" style="color:var(--accent)">Patient Portal</a></div>` : ''}
           ${d.notes    ? `<div style="font-size:12px;color:var(--text3);margin-top:4px;font-style:italic">${esc(d.notes)}</div>` : ''}
         </div>
