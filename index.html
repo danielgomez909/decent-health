@@ -601,6 +601,8 @@
     <button class="nav-btn" data-page="habits" onclick="showPage('habits', this)">Habits</button>
     <button class="nav-btn" data-page="diary" onclick="showPage('diary', this)">Diary</button>
     <button class="nav-btn" data-page="doctors" onclick="showPage('doctors', this)">Doctors</button>
+    <button class="nav-btn" data-page="issues" onclick="showPage('issues', this)">Issues</button>
+    <button class="nav-btn" data-page="rx" onclick="showPage('rx', this)">Rx</button>
     <button class="nav-btn" data-page="admin" onclick="showPage('admin', this)">Admin</button>
     <button class="nav-btn" data-page="reference" onclick="showPage('reference', this)">Ref</button>
   </nav>
@@ -1195,17 +1197,7 @@
             <label>Notes (post-visit)</label>
             <textarea id="af-notes" rows="3" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:13px;padding:6px 10px;outline:none;width:100%;resize:vertical" placeholder="Outcomes, follow-ups, observations"></textarea>
           </div>
-          <div style="display:flex;align-items:center;gap:10px">
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text);text-transform:none;letter-spacing:0;cursor:pointer">
-              <input type="checkbox" id="af-prescribed" style="width:14px;height:14px;accent-color:var(--accent)"> Something prescribed
-            </label>
-          </div>
-          <div id="af-prescribed-notes-group" style="display:none">
-            <div class="form-group">
-              <label>Prescription notes</label>
-              <input type="text" id="af-prescription-notes" class="panel-input" placeholder="e.g. Amoxicillin 500mg, 10 days" />
-            </div>
-          </div>
+
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div class="form-group">
               <label>Link URL</label>
@@ -1221,6 +1213,231 @@
             <button class="btn" style="background:var(--surface2);color:var(--text)" onclick="hideApptForm()">Cancel</button>
             <button class="btn btn-danger" id="af-delete-btn" style="display:none;margin-left:auto" onclick="deleteAppt()">Delete</button>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ISSUES PAGE -->
+  <div id="page-issues" class="page">
+    <div class="subtab-nav">
+      <button class="subtab-btn active" onclick="showIssueSubtab('list', this)">Issues</button>
+      <button class="subtab-btn" onclick="showIssueSubtab('notes', this)">Notes Log</button>
+    </div>
+
+    <!-- ISSUES LIST -->
+    <div id="issues-subtab-list" class="subtab-panel active">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:13px;color:var(--text2)">Health issues &amp; ailments</div>
+          <button class="btn" onclick="showIssueForm()">+ Add</button>
+        </div>
+        <!-- Filters -->
+        <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+          <select id="issue-filter-status" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:12px;padding:4px 8px;outline:none;flex:1" onchange="renderIssueList()">
+            <option value="">All statuses</option>
+            <option value="Active">Active</option>
+            <option value="Monitoring">Monitoring</option>
+            <option value="Chronic">Chronic</option>
+            <option value="Resolved">Resolved</option>
+          </select>
+          <select id="issue-filter-severity" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:12px;padding:4px 8px;outline:none;flex:1" onchange="renderIssueList()">
+            <option value="">All severities</option>
+            <option value="1">Mild</option>
+            <option value="3">Medium</option>
+            <option value="5">Severe</option>
+          </select>
+        </div>
+        <div id="issues-list"><div class="loading">Loading…</div></div>
+      </div>
+
+      <!-- Issue form -->
+      <div id="issue-form" style="display:none;margin-top:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px" id="issue-form-title">Add Issue</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="form-group">
+              <label>Name</label>
+              <input type="text" id="if-name" class="panel-input" placeholder="e.g. Blepharitis" />
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="if-status" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:13px;padding:5px 8px;outline:none;width:100%">
+                <option value="Active">Active</option>
+                <option value="Monitoring">Monitoring</option>
+                <option value="Chronic">Chronic</option>
+                <option value="Resolved">Resolved</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+            <div class="form-group">
+              <label>Severity</label>
+              <select id="if-severity" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:13px;padding:5px 8px;outline:none;width:100%">
+                <option value="">— optional —</option>
+                <option value="1">1 — Mild</option>
+                <option value="3">3 — Medium</option>
+                <option value="5">5 — Severe</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Start Date</label>
+              <input type="date" id="if-start-date" class="panel-input" />
+            </div>
+            <div class="form-group">
+              <label>End Date</label>
+              <input type="date" id="if-end-date" class="panel-input" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" id="if-description" class="panel-input" placeholder="Brief description" />
+          </div>
+          <div class="form-group">
+            <label>Current Diagnosis / Treatment</label>
+            <input type="text" id="if-diagnosis" class="panel-input" placeholder="e.g. Erythromycin ointment, PT" />
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn" onclick="saveIssue()">Save</button>
+            <button class="btn" style="background:var(--surface2);color:var(--text)" onclick="hideIssueForm()">Cancel</button>
+            <button class="btn btn-danger" id="if-delete-btn" style="display:none;margin-left:auto" onclick="deleteIssue()">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTES LOG -->
+    <div id="issues-subtab-notes" class="subtab-panel">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:13px;color:var(--text2)">Running notes log</div>
+          <button class="btn" onclick="showNoteForm()">+ Add Note</button>
+        </div>
+        <div style="margin-bottom:10px">
+          <select id="note-filter-issue" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:12px;padding:4px 8px;outline:none;width:100%" onchange="renderNotesList()">
+            <option value="">All issues</option>
+          </select>
+        </div>
+        <div id="notes-list"><div class="loading">Loading…</div></div>
+      </div>
+
+      <!-- Note form -->
+      <div id="note-form" style="display:none;margin-top:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px" id="note-form-title">Add Note</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="form-group">
+              <label>Issue</label>
+              <select id="nf-issue" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:13px;padding:5px 8px;outline:none;width:100%">
+                <option value="">— select —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="nf-date" class="panel-input" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Note</label>
+            <textarea id="nf-note" rows="3" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:13px;padding:6px 10px;outline:none;width:100%;resize:vertical" placeholder="Enter note..."></textarea>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn" onclick="saveNote()">Save</button>
+            <button class="btn" style="background:var(--surface2);color:var(--text)" onclick="hideNoteForm()">Cancel</button>
+            <button class="btn btn-danger" id="nf-delete-btn" style="display:none;margin-left:auto" onclick="deleteNote()">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RX PAGE -->
+  <div id="page-rx" class="page">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:13px;color:var(--text2)">Prescriptions &amp; treatments</div>
+        <button class="btn" onclick="showRxForm()">+ Add</button>
+      </div>
+      <!-- Filters -->
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <select id="rx-filter-status" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:12px;padding:4px 8px;outline:none;flex:1" onchange="renderRxList()">
+          <option value="">All statuses</option>
+          <option value="Active">Active</option>
+          <option value="Completed">Completed</option>
+          <option value="Discontinued">Discontinued</option>
+          <option value="Indefinite">Indefinite</option>
+        </select>
+        <select id="rx-filter-issue" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:12px;padding:4px 8px;outline:none;flex:1" onchange="renderRxList()">
+          <option value="">All issues</option>
+        </select>
+        <select id="rx-filter-doctor" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:12px;padding:4px 8px;outline:none;flex:1" onchange="renderRxList()">
+          <option value="">All practices</option>
+        </select>
+      </div>
+      <div id="rx-list"><div class="loading">Loading…</div></div>
+    </div>
+
+    <!-- Rx form -->
+    <div id="rx-form" style="display:none;margin-top:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px" id="rx-form-title">Add Prescription</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="form-group">
+            <label>Issue</label>
+            <select id="rxf-issue" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:13px;padding:5px 8px;outline:none;width:100%" onchange="populateRxAppts()">
+              <option value="">— select issue —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Appointment (optional)</label>
+            <select id="rxf-appt-issue" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:13px;padding:5px 8px;outline:none;width:100%">
+              <option value="">— no appointment —</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="form-group">
+            <label>Medication / Treatment</label>
+            <input type="text" id="rxf-name" class="panel-input" placeholder="e.g. Erythromycin ointment" />
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="rxf-status" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:13px;padding:5px 8px;outline:none;width:100%">
+              <option value="Active">Active</option>
+              <option value="Indefinite">Indefinite</option>
+              <option value="Completed">Completed</option>
+              <option value="Discontinued">Discontinued</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="form-group">
+            <label>Dosage</label>
+            <input type="text" id="rxf-dosage" class="panel-input" placeholder="e.g. 500mg" />
+          </div>
+          <div class="form-group">
+            <label>Frequency</label>
+            <input type="text" id="rxf-frequency" class="panel-input" placeholder="e.g. twice daily" />
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="form-group">
+            <label>Start Date</label>
+            <input type="date" id="rxf-start-date" class="panel-input" />
+          </div>
+          <div class="form-group">
+            <label>End Date</label>
+            <input type="date" id="rxf-end-date" class="panel-input" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <input type="text" id="rxf-notes" class="panel-input" placeholder="Optional notes" />
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn" onclick="saveRx()">Save</button>
+          <button class="btn" style="background:var(--surface2);color:var(--text)" onclick="hideRxForm()">Cancel</button>
+          <button class="btn btn-danger" id="rxf-delete-btn" style="display:none;margin-left:auto" onclick="deleteRx()">Delete</button>
         </div>
       </div>
     </div>
@@ -1789,7 +2006,9 @@ async function showPage(name, btn) {
   btn.classList.add('active');
   if (name === 'admin')     { await loadConfig(); await loadHabitsData(); renderAdmin(); }
   if (name === 'diary')    { setDefaultDiaryDate(); await loadDiaryEntries(); renderDiary(); }
-  if (name === 'doctors') { await loadDoctorsData(); renderDoctorList(); populateApptFilterDoctors(); }
+  if (name === 'doctors')  { await Promise.all([loadDoctorsData(), loadIssuesData()]); renderDoctorList(); populateApptFilterDoctors(); }
+  if (name === 'issues')   { await loadIssuesData(); renderIssueList(); }
+  if (name === 'rx')       { await loadIssuesData(); await loadDoctorsData(); populateRxIssueDropdowns(); renderRxList(); }
   // reference tab loads via iframe automatically
   if (name === 'leg')    { setDefaultLegDates(); await loadLegData(); renderLeg(); }
   if (name === 'habits') {
@@ -3201,13 +3420,13 @@ async function loadDoctorsData() {
   apptList    = apptsRes.data || [];
 }
 
-function showDoctorSubtab(name, btn) {
+async function showDoctorSubtab(name, btn) {
   document.querySelectorAll('#page-doctors .subtab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('#page-doctors .subtab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('doctors-subtab-' + name).classList.add('active');
   btn.classList.add('active');
   if (name === 'directory')    renderDoctorList();
-  if (name === 'appointments') { populateApptFilterDoctors(); renderApptList(); }
+  if (name === 'appointments') { await loadIssuesData(); populateApptFilterDoctors(); renderApptList(); }
 }
 
 // ── Directory ─────────────────────────────────────
@@ -3350,15 +3569,33 @@ function renderApptList() {
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
             <span style="font-size:13px;font-weight:600;color:var(--text)">${dateStr}</span>
             <span style="font-size:12px;color:var(--accent)">${esc(doc?.practice_name || '—')}</span>
-            ${a.prescribed ? '<span style="font-size:11px;background:rgba(194,98,63,0.12);color:var(--accent);padding:1px 7px;border-radius:20px">Rx</span>' : ''}
+
           </div>
           ${seenBy ? `<div style="font-size:12px;color:var(--text2);margin-bottom:3px">Seen by: ${esc(seenBy)}</div>` : ''}
           ${a.purpose ? `<div style="font-size:12px;color:var(--text2);margin-bottom:3px"><strong>Purpose:</strong> ${esc(a.purpose)}</div>` : ''}
           ${a.notes   ? `<div style="font-size:12px;color:var(--text2);margin-bottom:3px"><strong>Notes:</strong> ${esc(a.notes)}</div>` : ''}
-          ${a.prescribed && a.prescription_notes ? `<div style="font-size:12px;color:var(--text2);margin-bottom:3px"><strong>Rx:</strong> ${esc(a.prescription_notes)}</div>` : ''}
+
           ${a.link_url ? `<div style="font-size:12px;margin-top:4px"><a href="${esc(a.link_url)}" target="_blank" style="color:var(--accent)">${esc(a.link_description || a.link_url)}</a></div>` : ''}
         </div>
         <button onclick="showApptForm('${a.id}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--text2);flex-shrink:0">Edit</button>
+      </div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.6px">Linked Issues</div>
+        <div id="appt-issues-${a.id}">
+          ${apptIssuesList.filter(ai => ai.appt_id === a.id).map(ai =>
+            `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-size:11px;margin-right:4px;margin-bottom:4px">
+              ${esc(issuesList.find(i => i.id === ai.issue_id)?.name || '—')}
+              <button onclick="unlinkIssueFromAppt('${ai.id}').then(()=>showPage('doctors',document.querySelector('[data-page=doctors]')))" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;padding:0;margin-left:2px">✕</button>
+            </span>`
+          ).join('')}
+        </div>
+        <div style="display:flex;gap:6px;margin-top:6px">
+          <select id="link-issue-${a.id}" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:12px;padding:3px 6px;outline:none;flex:1">
+            <option value="">Link an issue…</option>
+            ${issuesList.map(i => `<option value="${i.id}">${esc(i.name)}</option>`).join('')}
+          </select>
+          <button onclick="linkIssueToAppt('${a.id}', document.getElementById('link-issue-${a.id}').value).then(()=>showPage('doctors',document.querySelector('[data-page=doctors]')))" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text2)">Link</button>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -3372,20 +3609,16 @@ function showApptForm(id) {
   document.getElementById('af-seen-by').value           = a?.seen_by           || '';
   document.getElementById('af-purpose').value           = a?.purpose           || '';
   document.getElementById('af-notes').value             = a?.notes             || '';
-  document.getElementById('af-prescribed').checked      = a?.prescribed        || false;
-  document.getElementById('af-prescription-notes').value = a?.prescription_notes || '';
+
   document.getElementById('af-link-url').value          = a?.link_url          || '';
   document.getElementById('af-link-desc').value         = a?.link_description  || '';
   document.getElementById('af-delete-btn').style.display = a ? 'block' : 'none';
-  document.getElementById('af-prescribed-notes-group').style.display = a?.prescribed ? 'block' : 'none';
+
   populateApptDoctorDropdown(a?.doctor_id);
   document.getElementById('appt-form').style.display = 'block';
   document.getElementById('appt-form').scrollIntoView({ behavior: 'smooth' });
 
-  // Wire prescribed toggle
-  document.getElementById('af-prescribed').onchange = function() {
-    document.getElementById('af-prescribed-notes-group').style.display = this.checked ? 'block' : 'none';
-  };
+
 }
 
 function hideApptForm() {
@@ -3399,17 +3632,14 @@ async function saveAppt() {
   if (!dateVal)   { showToast('Date required', 'error'); return; }
   if (!doctorId)  { showToast('Please select a practice', 'error'); return; }
 
-  const prescribed = document.getElementById('af-prescribed').checked;
   const payload = {
-    appt_date:          dateVal,
-    doctor_id:          doctorId,
-    seen_by:            document.getElementById('af-seen-by').value.trim()            || null,
-    purpose:            document.getElementById('af-purpose').value.trim()            || null,
-    notes:              document.getElementById('af-notes').value.trim()              || null,
-    prescribed,
-    prescription_notes: prescribed ? (document.getElementById('af-prescription-notes').value.trim() || null) : null,
-    link_url:           document.getElementById('af-link-url').value.trim()           || null,
-    link_description:   document.getElementById('af-link-desc').value.trim()          || null
+    appt_date:        dateVal,
+    doctor_id:        doctorId,
+    seen_by:          document.getElementById('af-seen-by').value.trim()  || null,
+    purpose:          document.getElementById('af-purpose').value.trim()  || null,
+    notes:            document.getElementById('af-notes').value.trim()    || null,
+    link_url:         document.getElementById('af-link-url').value.trim() || null,
+    link_description: document.getElementById('af-link-desc').value.trim()|| null
   };
 
   let error;
@@ -3453,6 +3683,431 @@ function formatPhone(raw) {
     return '(' + digits.slice(1,4) + ') ' + digits.slice(4,7) + '-' + digits.slice(7);
   }
   return raw; // return as-is if not 10/11 digits
+}
+
+// ── Issues & Rx ───────────────────────────────────
+let issuesList        = [];
+let issueNotesList    = [];
+let apptIssuesList    = [];
+let rxList            = [];
+let editingIssueId    = null;
+let editingNoteId     = null;
+let editingRxId       = null;
+
+const SEVERITY_LABEL = { 1: 'Mild', 3: 'Medium', 5: 'Severe' };
+const SEVERITY_COLOR = { 1: 'var(--good)', 3: 'var(--accent2)', 5: 'var(--danger)' };
+const STATUS_COLOR   = {
+  Active: 'var(--danger)', Monitoring: 'var(--accent2)',
+  Chronic: 'var(--accent)', Resolved: 'var(--good)'
+};
+
+async function loadIssuesData() {
+  const [issRes, notesRes, aiRes, rxRes] = await Promise.all([
+    sb.from('issues').select('*').order('created_at', { ascending: false }),
+    sb.from('issue_notes').select('*').order('note_date', { ascending: false }),
+    sb.from('appointment_issues').select('*, appointments(appt_date, doctor_id)'),
+    sb.from('prescriptions').select('*, appointment_issues(appt_id, issue_id, appointments(appt_date, doctor_id))')
+  ]);
+  if (issRes.error)   { showToast('Error loading issues', 'error'); return; }
+  if (notesRes.error) { showToast('Error loading notes', 'error'); return; }
+  if (aiRes.error)    { showToast('Error loading appt-issues', 'error'); return; }
+  if (rxRes.error)    { showToast('Error loading prescriptions', 'error'); return; }
+
+  issuesList     = issRes.data   || [];
+  issueNotesList = notesRes.data || [];
+  apptIssuesList = aiRes.data    || [];
+  rxList         = rxRes.data    || [];
+}
+
+// ── Issues subtab ─────────────────────────────────
+function showIssueSubtab(name, btn) {
+  document.querySelectorAll('#page-issues .subtab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#page-issues .subtab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('issues-subtab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'list')  renderIssueList();
+  if (name === 'notes') { populateNoteIssueDropdown(); renderNotesList(); }
+}
+
+function renderIssueList() {
+  const el            = document.getElementById('issues-list');
+  const filterStatus   = document.getElementById('issue-filter-status').value;
+  const filterSeverity = document.getElementById('issue-filter-severity').value;
+
+  let filtered = [...issuesList];
+  if (filterStatus)   filtered = filtered.filter(i => i.status === filterStatus);
+  if (filterSeverity) filtered = filtered.filter(i => i.severity == filterSeverity);
+
+  if (!filtered.length) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px 0">No issues found.</div>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(issue => {
+    const relatedRx    = rxList.filter(r => r.appointment_issues?.issue_id === issue.id);
+    const relatedAppts = apptIssuesList.filter(a => a.issue_id === issue.id);
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">
+      <div style="display:flex;align-items:start;justify-content:space-between;gap:10px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-size:15px;font-weight:600;color:var(--text)">${esc(issue.name)}</span>
+            <span style="font-size:11px;font-weight:600;padding:1px 8px;border-radius:20px;background:rgba(0,0,0,0.06);color:${STATUS_COLOR[issue.status]}">${issue.status}</span>
+            ${issue.severity != null ? `<span style="font-size:11px;color:${SEVERITY_COLOR[issue.severity]}">${SEVERITY_LABEL[issue.severity]}</span>` : ''}
+          </div>
+          ${issue.description ? `<div style="font-size:12px;color:var(--text2);margin-bottom:3px">${esc(issue.description)}</div>` : ''}
+          ${issue.diagnosis   ? `<div style="font-size:12px;color:var(--text2);margin-bottom:3px"><strong>Diagnosis:</strong> ${esc(issue.diagnosis)}</div>` : ''}
+          <div style="display:flex;gap:12px;margin-top:6px;font-size:11px;color:var(--text3)">
+            ${issue.start_date ? `<span>Started: ${issue.start_date}</span>` : ''}
+            ${issue.end_date   ? `<span>Ended: ${issue.end_date}</span>`     : ''}
+            ${relatedAppts.length ? `<span>${relatedAppts.length} appt${relatedAppts.length > 1 ? 's' : ''}</span>` : ''}
+            ${relatedRx.length    ? `<span>${relatedRx.length} Rx</span>`    : ''}
+          </div>
+        </div>
+        <button onclick="showIssueForm('${issue.id}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--text2);flex-shrink:0">Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showIssueForm(id) {
+  editingIssueId = id || null;
+  const issue = id ? issuesList.find(i => i.id === id) : null;
+  document.getElementById('issue-form-title').textContent = issue ? 'Edit Issue' : 'Add Issue';
+  document.getElementById('if-name').value        = issue?.name        || '';
+  document.getElementById('if-status').value      = issue?.status      || 'Active';
+  document.getElementById('if-severity').value    = issue?.severity    || '';
+  document.getElementById('if-start-date').value  = issue?.start_date  || '';
+  document.getElementById('if-end-date').value    = issue?.end_date    || '';
+  document.getElementById('if-description').value = issue?.description || '';
+  document.getElementById('if-diagnosis').value   = issue?.diagnosis   || '';
+  document.getElementById('if-delete-btn').style.display = issue ? 'block' : 'none';
+  document.getElementById('issue-form').style.display = 'block';
+  document.getElementById('issue-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function hideIssueForm() {
+  document.getElementById('issue-form').style.display = 'none';
+  editingIssueId = null;
+}
+
+async function saveIssue() {
+  const name = document.getElementById('if-name').value.trim();
+  if (!name) { showToast('Name is required', 'error'); return; }
+
+  const payload = {
+    name,
+    status:      document.getElementById('if-status').value,
+    severity:    document.getElementById('if-severity').value ? parseInt(document.getElementById('if-severity').value) : null,
+    start_date:  document.getElementById('if-start-date').value  || null,
+    end_date:    document.getElementById('if-end-date').value    || null,
+    description: document.getElementById('if-description').value.trim() || null,
+    diagnosis:   document.getElementById('if-diagnosis').value.trim()   || null
+  };
+
+  let error;
+  if (editingIssueId) {
+    ({ error } = await sb.from('issues').update(payload).eq('id', editingIssueId));
+  } else {
+    ({ error } = await sb.from('issues').insert(payload));
+  }
+  if (error) { showToast('Error saving issue', 'error'); return; }
+  showToast('Issue saved ✓', 'success');
+  hideIssueForm();
+  await loadIssuesData();
+  renderIssueList();
+  populateRxIssueDropdowns();
+}
+
+async function deleteIssue() {
+  if (!editingIssueId) return;
+  const issue = issuesList.find(i => i.id === editingIssueId);
+  if (!confirm('Delete "' + issue?.name + '"? This will also delete all notes for this issue.')) return;
+  await sb.from('issue_notes').delete().eq('issue_id', editingIssueId);
+  const { error } = await sb.from('issues').delete().eq('id', editingIssueId);
+  if (error) { showToast('Error deleting', 'error'); return; }
+  showToast('Issue deleted', 'success');
+  hideIssueForm();
+  await loadIssuesData();
+  renderIssueList();
+}
+
+// ── Notes ─────────────────────────────────────────
+function populateNoteIssueDropdown(selectedId) {
+  const sel = document.getElementById('note-filter-issue');
+  if (sel) sel.innerHTML = '<option value="">All issues</option>' +
+    issuesList.map(i => `<option value="${i.id}">${esc(i.name)}</option>`).join('');
+
+  const nfSel = document.getElementById('nf-issue');
+  if (nfSel) nfSel.innerHTML = '<option value="">— select —</option>' +
+    issuesList.map(i => `<option value="${i.id}" ${i.id === selectedId ? 'selected' : ''}>${esc(i.name)}</option>`).join('');
+}
+
+function renderNotesList() {
+  const el = document.getElementById('notes-list');
+  const filterIssue = document.getElementById('note-filter-issue').value;
+  const issueMap = {};
+  issuesList.forEach(i => { issueMap[i.id] = i.name; });
+
+  let filtered = [...issueNotesList];
+  if (filterIssue) filtered = filtered.filter(n => n.issue_id === filterIssue);
+
+  if (!filtered.length) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px 0">No notes found.</div>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(n => {
+    const d = new Date(n.note_date + 'T12:00:00');
+    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:start;justify-content:space-between;gap:10px">
+        <div style="flex:1">
+          <div style="display:flex;gap:10px;margin-bottom:4px">
+            <span style="font-size:12px;font-weight:600;color:var(--accent)">${esc(issueMap[n.issue_id] || '—')}</span>
+            <span style="font-size:11px;color:var(--text3)">${dateStr}</span>
+          </div>
+          <div style="font-size:13px;color:var(--text2);white-space:pre-wrap">${esc(n.note)}</div>
+        </div>
+        <button onclick="showNoteForm('${n.id}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--text2);flex-shrink:0">Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showNoteForm(id) {
+  editingNoteId = id || null;
+  const note = id ? issueNotesList.find(n => n.id === id) : null;
+  document.getElementById('note-form-title').textContent = note ? 'Edit Note' : 'Add Note';
+  populateNoteIssueDropdown(note?.issue_id);
+  document.getElementById('nf-date').value = note?.note_date || localToday();
+  document.getElementById('nf-note').value = note?.note      || '';
+  document.getElementById('nf-delete-btn').style.display = note ? 'block' : 'none';
+  document.getElementById('note-form').style.display = 'block';
+  document.getElementById('note-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function hideNoteForm() {
+  document.getElementById('note-form').style.display = 'none';
+  editingNoteId = null;
+}
+
+async function saveNote() {
+  const issueId = document.getElementById('nf-issue').value;
+  const dateVal = document.getElementById('nf-date').value;
+  const noteVal = document.getElementById('nf-note').value.trim();
+  if (!issueId) { showToast('Please select an issue', 'error'); return; }
+  if (!dateVal) { showToast('Please select a date', 'error'); return; }
+  if (!noteVal) { showToast('Note cannot be empty', 'error'); return; }
+
+  const payload = { issue_id: issueId, note_date: dateVal, note: noteVal };
+  let error;
+  if (editingNoteId) {
+    ({ error } = await sb.from('issue_notes').update(payload).eq('id', editingNoteId));
+  } else {
+    ({ error } = await sb.from('issue_notes').insert(payload));
+  }
+  if (error) { showToast('Error saving note', 'error'); return; }
+  showToast('Note saved ✓', 'success');
+  hideNoteForm();
+  await loadIssuesData();
+  renderNotesList();
+}
+
+async function deleteNote() {
+  if (!editingNoteId) return;
+  if (!confirm('Delete this note?')) return;
+  const { error } = await sb.from('issue_notes').delete().eq('id', editingNoteId);
+  if (error) { showToast('Error deleting note', 'error'); return; }
+  showToast('Note deleted', 'success');
+  hideNoteForm();
+  await loadIssuesData();
+  renderNotesList();
+}
+
+// ── Rx ────────────────────────────────────────────
+function populateRxIssueDropdowns() {
+  const filterSel = document.getElementById('rx-filter-issue');
+  if (filterSel) filterSel.innerHTML = '<option value="">All issues</option>' +
+    issuesList.map(i => `<option value="${i.id}">${esc(i.name)}</option>`).join('');
+
+  const filterDoc = document.getElementById('rx-filter-doctor');
+  if (filterDoc) filterDoc.innerHTML = '<option value="">All practices</option>' +
+    doctorsList.map(d => `<option value="${d.id}">${esc(d.practice_name)}</option>`).join('');
+
+  const formSel = document.getElementById('rxf-issue');
+  if (formSel) formSel.innerHTML = '<option value="">— select issue —</option>' +
+    issuesList.map(i => `<option value="${i.id}">${esc(i.name)}</option>`).join('');
+}
+
+async function populateRxAppts() {
+  const issueId = document.getElementById('rxf-issue').value;
+  const sel = document.getElementById('rxf-appt-issue');
+  sel.innerHTML = '<option value="">— no appointment —</option>';
+  if (!issueId) return;
+
+  const related = apptIssuesList.filter(ai => ai.issue_id === issueId);
+  const docMap  = {};
+  doctorsList.forEach(d => { docMap[d.id] = d.practice_name; });
+
+  related.forEach(ai => {
+    const appt = ai.appointments;
+    if (!appt) return;
+    const label = appt.appt_date + (appt.doctor_id ? ' — ' + esc(docMap[appt.doctor_id] || '') : '');
+    sel.innerHTML += `<option value="${ai.id}">${label}</option>`;
+  });
+}
+
+function renderRxList() {
+  const el           = document.getElementById('rx-list');
+  const filterStatus = document.getElementById('rx-filter-status').value;
+  const filterIssue  = document.getElementById('rx-filter-issue').value;
+  const filterDoctor = document.getElementById('rx-filter-doctor').value;
+
+  const issueMap = {};
+  issuesList.forEach(i => { issueMap[i.id] = i.name; });
+  const docMap = {};
+  doctorsList.forEach(d => { docMap[d.id] = d.practice_name; });
+
+  let filtered = [...rxList];
+  if (filterStatus) filtered = filtered.filter(r => r.status === filterStatus);
+  if (filterIssue)  filtered = filtered.filter(r => r.appointment_issues?.issue_id === filterIssue);
+  if (filterDoctor) filtered = filtered.filter(r => r.appointment_issues?.appointments?.doctor_id === filterDoctor);
+
+  if (!filtered.length) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px 0">No prescriptions found.</div>';
+    return;
+  }
+
+  const statusColor = { Active:'var(--danger)', Indefinite:'var(--accent)', Completed:'var(--good)', Discontinued:'var(--text3)' };
+
+  el.innerHTML = filtered.map(rx => {
+    const issueId  = rx.appointment_issues?.issue_id;
+    const doctorId = rx.appointment_issues?.appointments?.doctor_id;
+    const apptDate = rx.appointment_issues?.appointments?.appt_date;
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">
+      <div style="display:flex;align-items:start;justify-content:space-between;gap:10px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-size:15px;font-weight:600;color:var(--text)">${esc(rx.name)}</span>
+            <span style="font-size:11px;font-weight:600;padding:1px 8px;border-radius:20px;background:rgba(0,0,0,0.06);color:${statusColor[rx.status]}">${rx.status}</span>
+          </div>
+          ${rx.dosage || rx.frequency ? `<div style="font-size:12px;color:var(--text2);margin-bottom:3px">${[rx.dosage, rx.frequency].filter(Boolean).map(esc).join(' · ')}</div>` : ''}
+          ${issueId  ? `<div style="font-size:12px;color:var(--text2);margin-bottom:2px">Issue: ${esc(issueMap[issueId] || '—')}</div>` : ''}
+          ${doctorId ? `<div style="font-size:12px;color:var(--text2);margin-bottom:2px">Practice: ${esc(docMap[doctorId] || '—')}</div>` : ''}
+          ${apptDate ? `<div style="font-size:12px;color:var(--text2);margin-bottom:2px">Appt: ${apptDate}</div>` : ''}
+          <div style="display:flex;gap:12px;margin-top:4px;font-size:11px;color:var(--text3)">
+            ${rx.start_date ? `<span>Started: ${rx.start_date}</span>` : ''}
+            ${rx.end_date   ? `<span>Ended: ${rx.end_date}</span>`     : ''}
+          </div>
+          ${rx.notes ? `<div style="font-size:12px;color:var(--text3);margin-top:4px;font-style:italic">${esc(rx.notes)}</div>` : ''}
+        </div>
+        <button onclick="showRxForm('${rx.id}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--text2);flex-shrink:0">Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showRxForm(id) {
+  editingRxId = id || null;
+  const rx = id ? rxList.find(r => r.id === id) : null;
+  document.getElementById('rx-form-title').textContent = rx ? 'Edit Prescription' : 'Add Prescription';
+  populateRxIssueDropdowns();
+
+  document.getElementById('rxf-name').value       = rx?.name       || '';
+  document.getElementById('rxf-status').value     = rx?.status     || 'Active';
+  document.getElementById('rxf-dosage').value     = rx?.dosage     || '';
+  document.getElementById('rxf-frequency').value  = rx?.frequency  || '';
+  document.getElementById('rxf-start-date').value = rx?.start_date || '';
+  document.getElementById('rxf-end-date').value   = rx?.end_date   || '';
+  document.getElementById('rxf-notes').value      = rx?.notes      || '';
+  document.getElementById('rxf-delete-btn').style.display = rx ? 'block' : 'none';
+
+  if (rx?.appointment_issues) {
+    document.getElementById('rxf-issue').value = rx.appointment_issues.issue_id || '';
+    populateRxAppts().then(() => {
+      document.getElementById('rxf-appt-issue').value = rx.appt_issue_id || '';
+    });
+  }
+
+  document.getElementById('rx-form').style.display = 'block';
+  document.getElementById('rx-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function hideRxForm() {
+  document.getElementById('rx-form').style.display = 'none';
+  editingRxId = null;
+}
+
+async function saveRx() {
+  const apptIssueId = document.getElementById('rxf-appt-issue').value || null;
+  const name        = document.getElementById('rxf-name').value.trim();
+  if (!name) { showToast('Medication name required', 'error'); return; }
+
+  // If appt-issue selected use it; otherwise we need an issue to create a standalone rx
+  // For now require appt_issue_id if we have one, else create without
+  const payload = {
+    appt_issue_id: apptIssueId || null,
+    name,
+    status:      document.getElementById('rxf-status').value,
+    dosage:      document.getElementById('rxf-dosage').value.trim()     || null,
+    frequency:   document.getElementById('rxf-frequency').value.trim()  || null,
+    start_date:  document.getElementById('rxf-start-date').value        || null,
+    end_date:    document.getElementById('rxf-end-date').value          || null,
+    notes:       document.getElementById('rxf-notes').value.trim()      || null
+  };
+
+  let error;
+  if (editingRxId) {
+    ({ error } = await sb.from('prescriptions').update(payload).eq('id', editingRxId));
+  } else {
+    ({ error } = await sb.from('prescriptions').insert(payload));
+  }
+  if (error) { showToast('Error saving prescription: ' + error.message, 'error'); return; }
+  showToast('Prescription saved ✓', 'success');
+  hideRxForm();
+  await loadIssuesData();
+  renderRxList();
+}
+
+async function deleteRx() {
+  if (!editingRxId) return;
+  if (!confirm('Delete this prescription?')) return;
+  const { error } = await sb.from('prescriptions').delete().eq('id', editingRxId);
+  if (error) { showToast('Error deleting', 'error'); return; }
+  showToast('Prescription deleted', 'success');
+  hideRxForm();
+  await loadIssuesData();
+  renderRxList();
+}
+
+// ── Appointments: link issues ─────────────────────
+async function loadApptIssueLinks(apptId) {
+  const { data, error } = await sb
+    .from('appointment_issues')
+    .select('*, issues(id, name)')
+    .eq('appt_id', apptId);
+  if (error) return [];
+  return data || [];
+}
+
+async function linkIssueToAppt(apptId, issueId) {
+  if (!apptId || !issueId) return;
+  const { error } = await sb.from('appointment_issues').insert({
+    appt_id: apptId, issue_id: issueId
+  });
+  if (error && error.code !== '23505') { // ignore unique violation
+    showToast('Error linking issue: ' + error.message, 'error'); return;
+  }
+  showToast('Issue linked ✓', 'success');
+  await loadIssuesData();
+}
+
+async function unlinkIssueFromAppt(apptIssueId) {
+  if (!confirm('Unlink this issue from the appointment?')) return;
+  const { error } = await sb.from('appointment_issues').delete().eq('id', apptIssueId);
+  if (error) { showToast('Error unlinking', 'error'); return; }
+  showToast('Issue unlinked', 'success');
+  await loadIssuesData();
 }
 
 // ── Auth ─────────────────────────────────────────
