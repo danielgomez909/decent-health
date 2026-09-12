@@ -3594,7 +3594,7 @@ function renderApptList() {
             <option value="">Link an issue…</option>
             ${issuesList.map(i => `<option value="${i.id}">${esc(i.name)}</option>`).join('')}
           </select>
-          <button onclick="linkIssueToAppt('${a.id}', document.getElementById('link-issue-${a.id}').value).then(()=>showPage('doctors',document.querySelector('[data-page=doctors]')))" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text2)">Link</button>
+          <button onclick="linkIssueToAppt('${a.id}', document.getElementById('link-issue-${a.id}').value).then(()=>showPage('doctors',document.querySelector('[data-page=doctors]')))" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text2)">Save Link</button>
         </div>
       </div>
     </div>`;
@@ -4020,6 +4020,9 @@ function showRxForm(id) {
   document.getElementById('rxf-start-date').value = rx?.start_date || '';
   document.getElementById('rxf-end-date').value   = rx?.end_date   || '';
   document.getElementById('rxf-notes').value      = rx?.notes      || '';
+  // Always reset appt-issue dropdown when opening form
+  document.getElementById('rxf-appt-issue').innerHTML = '<option value="">— no appointment —</option>';
+  if (!rx) document.getElementById('rxf-issue').value = '';
   document.getElementById('rxf-delete-btn').style.display = rx ? 'block' : 'none';
 
   if (rx?.appointment_issues) {
@@ -4035,6 +4038,8 @@ function showRxForm(id) {
 
 function hideRxForm() {
   document.getElementById('rx-form').style.display = 'none';
+  document.getElementById('rxf-issue').value = '';
+  document.getElementById('rxf-appt-issue').innerHTML = '<option value="">— no appointment —</option>';
   editingRxId = null;
 }
 
