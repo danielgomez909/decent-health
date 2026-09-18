@@ -574,48 +574,44 @@
   .leg-inline input, .leg-inline select { flex:1; }
 
   /* Reference doc styles */
-  .ref-content { font-family: 'DM Sans', sans-serif; }
-  --cream: #faf7f2; --cream2: #f3ede3; --brown: #3d2b1f; --brown-light: #7a5c4a;
-  --accent: #c0622a; --green: #4a6741; --border: rgba(61,43,31,0.12);
-  --border-strong: rgba(61,43,31,0.25);
-  }
-  .ref-content .container { max-width: 860px; margin: 0 auto; padding: 40px 24px; }
-  .ref-content h1 { font-family: 'Lora', serif; font-size: 32px; font-weight: 600; color: var(--brown); margin-bottom: 4px; }
-  .ref-content h2 { font-family: 'Lora', serif; font-size: 22px; font-weight: 600; color: var(--brown); margin: 36px 0 12px; border-bottom: 2px solid var(--border-strong); padding-bottom: 6px; }
-  .ref-content h3 { font-family: 'Lora', serif; font-size: 16px; font-weight: 600; color: var(--brown); margin: 20px 0 8px; }
-  .ref-content p { margin-bottom: 10px; color: var(--brown-light); }
-  .ref-content .subtitle { font-size: 15px; color: var(--brown-light); margin-bottom: 32px; }
-  .ref-content .arch { display: flex; align-items: center; gap: 0; flex-wrap: wrap; margin: 16px 0; }
-  .ref-content .arch-box { background: white; border: 1px solid var(--border-strong); border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 500; text-align: center; }
-  .ref-content .arch-box .label { font-size: 10px; color: var(--brown-light); text-transform: uppercase; letter-spacing: .06em; display: block; margin-bottom: 2px; }
-  .ref-content .arch-arrow { padding: 0 10px; color: var(--brown-light); font-size: 18px; }
-  .ref-content .service-grid { display: grid; grid-template-columns: 160px 1fr; gap: 6px 16px; margin: 12px 0; }
-  .ref-content .service-label { font-size: 11px; font-weight: 500; color: var(--brown-light); text-transform: uppercase; letter-spacing: .06em; padding-top: 2px; }
-  .ref-content .service-val { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent); word-break: break-all; }
-  .ref-content .schema-table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 13px; }
-  .ref-content .schema-table th { text-align: left; padding: 7px 10px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: var(--brown-light); border-bottom: 2px solid var(--border-strong); background: var(--cream2); }
-  .ref-content .schema-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .ref-content { font-family: 'DM Sans', sans-serif; color: #3d2b1f; }
+  .ref-content .container { max-width: 860px; margin: 0 auto; padding: 24px 16px; }
+  .ref-content h1 { font-family: 'Lora', serif; font-size: 28px; font-weight: 600; color: #3d2b1f; margin-bottom: 4px; }
+  .ref-content h2 { font-family: 'Lora', serif; font-size: 20px; font-weight: 600; color: #3d2b1f; margin: 32px 0 10px; border-bottom: 2px solid rgba(61,43,31,0.25); padding-bottom: 6px; }
+  .ref-content h3 { font-family: 'Lora', serif; font-size: 15px; font-weight: 600; color: #3d2b1f; margin: 18px 0 8px; }
+  .ref-content p { margin-bottom: 10px; color: #7a5c4a; }
+  .ref-content .subtitle { font-size: 14px; color: #7a5c4a; margin-bottom: 28px; }
+  .ref-content .card { background: white; border: 1px solid rgba(61,43,31,0.12); border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; }
+  .ref-content .arch { display: flex; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+  .ref-content .arch-box { background: white; border: 1px solid rgba(61,43,31,0.25); border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 500; text-align: center; }
+  .ref-content .arch-box .label { font-size: 10px; color: #7a5c4a; text-transform: uppercase; letter-spacing: .06em; display: block; margin-bottom: 2px; }
+  .ref-content .arch-arrow { padding: 0 8px; color: #7a5c4a; font-size: 16px; }
+  .ref-content .service-grid { display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; margin: 10px 0; }
+  .ref-content .service-label { font-size: 11px; font-weight: 500; color: #7a5c4a; text-transform: uppercase; letter-spacing: .06em; }
+  .ref-content .service-val { font-family: 'DM Mono', monospace; font-size: 11px; color: #c0622a; word-break: break-all; }
+  .ref-content .schema-table { width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: 12px; }
+  .ref-content .schema-table th { text-align: left; padding: 6px 8px; font-size: 10px; font-weight: 500; text-transform: uppercase; color: #7a5c4a; border-bottom: 2px solid rgba(61,43,31,0.25); background: #f3ede3; }
+  .ref-content .schema-table td { padding: 6px 8px; border-bottom: 1px solid rgba(61,43,31,0.12); vertical-align: top; }
   .ref-content .schema-table tr:last-child td { border-bottom: none; }
-  .ref-content .badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-left: 4px; }
-  .ref-content .pk { background: rgba(192,98,42,0.12); color: var(--accent); }
-  .ref-content .fk { background: rgba(74,103,65,0.12); color: var(--green); }
-  .ref-content .col-name { font-family: 'DM Mono', monospace; font-size: 12px; }
-  .ref-content .col-type { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--brown-light); }
-  .ref-content .col-desc { font-size: 12px; color: var(--brown-light); }
-  .ref-content .backlog-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .ref-content .badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 5px; border-radius: 4px; margin-left: 3px; }
+  .ref-content .pk { background: rgba(192,98,42,0.12); color: #c0622a; }
+  .ref-content .fk { background: rgba(74,103,65,0.12); color: #4a6741; }
+  .ref-content .col-name { font-family: 'DM Mono', monospace; font-size: 11px; }
+  .ref-content .col-type { font-family: 'DM Mono', monospace; font-size: 10px; color: #7a5c4a; }
+  .ref-content .col-desc { font-size: 11px; color: #7a5c4a; }
+  .ref-content .backlog-item { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; border-bottom: 1px solid rgba(61,43,31,0.12); }
   .ref-content .backlog-item:last-child { border-bottom: none; }
-  .ref-content .tag { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; flex-shrink: 0; margin-top: 2px; }
-  .ref-content .tag-ux { background: rgba(192,98,42,0.12); color: var(--accent); }
-  .ref-content .tag-feature { background: rgba(74,103,65,0.12); color: var(--green); }
+  .ref-content .tag { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 20px; flex-shrink: 0; margin-top: 2px; }
+  .ref-content .tag-ux { background: rgba(192,98,42,0.12); color: #c0622a; }
+  .ref-content .tag-feature { background: rgba(74,103,65,0.12); color: #4a6741; }
   .ref-content .tag-security { background: rgba(180,50,50,0.10); color: #b43232; }
-  .ref-content .version-row { display: grid; grid-template-columns: 110px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .ref-content .version-row { display: grid; grid-template-columns: 110px 1fr; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(61,43,31,0.12); }
   .ref-content .version-row:last-child { border-bottom: none; }
-  .ref-content .version-date { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent); }
-  .ref-content .version-desc { font-size: 13px; color: var(--brown-light); }
-  .ref-content .steps ol { padding-left: 20px; }
-  .ref-content .steps li { margin-bottom: 6px; color: var(--brown-light); }
-  .ref-content .card { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; }
-  .ref-content code { font-family: 'DM Mono', monospace; font-size: 12px; background: var(--cream2); padding: 1px 5px; border-radius: 3px; }
+  .ref-content .version-date { font-family: 'DM Mono', monospace; font-size: 11px; color: #c0622a; }
+  .ref-content .version-desc { font-size: 12px; color: #7a5c4a; }
+  .ref-content .steps ol { padding-left: 18px; }
+  .ref-content .steps li { margin-bottom: 5px; color: #7a5c4a; font-size: 13px; }
+  .ref-content code { font-family: 'DM Mono', monospace; font-size: 11px; background: #f3ede3; padding: 1px 4px; border-radius: 3px; }
 </style>
 </head>
 <body>
@@ -712,7 +708,7 @@
       </div>
     </div>
 
-    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:nowrap">
+    <div id="stats-frame" style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:nowrap;border-radius:10px;padding:6px;border:1px solid var(--border);transition:background 0.3s">
       <div class="stat" style="flex:1;padding:6px 8px">
         <div class="stat-label">Wgt</div>
         <div class="stat-value" id="stat-today" style="font-size:16px">—</div>
@@ -2128,6 +2124,27 @@ function renderStats(rows) {
   } else {
     elStreak.textContent = '—';
     elStreak.className = 'stat-value';
+  }
+
+  // Frame background color based on weight vs avg and target
+  const belowAvg    = lastRow.vsAvg    != null && lastRow.vsAvg    < 0;
+  const belowTarget = lastRow.vsTarget != null && lastRow.vsTarget < 0;
+  const frame = document.getElementById('stats-frame');
+  if (frame) {
+    if (belowAvg && belowTarget) {
+      frame.style.background = '#bfdbfe';       // blue — both favorable
+    } else if (belowAvg || belowTarget) {
+      frame.style.background = 'rgba(34,197,94,0.25)';  // green — one favorable
+    } else if (!belowAvg && !belowTarget) {
+      if (lastRow.vsAvg != null && lastRow.vsTarget != null &&
+          lastRow.vsAvg > 0 && lastRow.vsTarget > 0) {
+        frame.style.background = 'rgba(220,38,38,0.20)'; // red — both unfavorable
+      } else {
+        frame.style.background = 'rgba(234,179,8,0.30)'; // amber — mixed
+      }
+    } else {
+      frame.style.background = 'rgba(234,179,8,0.30)';   // amber — mixed
+    }
   }
 }
 
