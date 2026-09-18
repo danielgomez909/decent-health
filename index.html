@@ -797,11 +797,21 @@
               <label>Date</label>
               <input type="date" id="leg-meas-date" class="panel-input" />
             </div>
-            <div class="leg-inline">
-              <label>R:</label>
-              <input type="number" id="leg-right" step="0.25" min="20" max="60" placeholder="28.50" class="panel-input" oninput="dynShrink(this)" />
-              <label>L:</label>
-              <input type="number" id="leg-left" step="0.25" min="20" max="60" placeholder="26.75" class="panel-input" oninput="dynShrink(this)" />
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <label style="font-size:12px;color:var(--text2);width:14px;flex-shrink:0">R:</label>
+                <button onclick="adjLeg('right',-0.25)" style="width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1">−</button>
+                <div id="leg-right-display" style="flex:1;text-align:center;font-size:18px;font-weight:600;color:var(--text)">—</div>
+                <button onclick="adjLeg('right', 0.25)" style="width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1">+</button>
+                <input type="hidden" id="leg-right" value="" />
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <label style="font-size:12px;color:var(--text2);width:14px;flex-shrink:0">L:</label>
+                <button onclick="adjLeg('left',-0.25)" style="width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1">−</button>
+                <div id="leg-left-display" style="flex:1;text-align:center;font-size:18px;font-weight:600;color:var(--text)">—</div>
+                <button onclick="adjLeg('left', 0.25)" style="width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1">+</button>
+                <input type="hidden" id="leg-left" value="" />
+              </div>
             </div>
           </div>
         </div>
@@ -2411,7 +2421,7 @@ async function showPage(name, btn) {
   if (name === 'issues')   { await loadIssuesData(); renderIssueList(); }
   if (name === 'rx')       { await loadIssuesData(); await loadDoctorsData(); populateRxIssueDropdowns(); renderRxList(); }
   // reference tab loads via iframe automatically
-  if (name === 'leg')    { setDefaultLegDates(); await loadLegData(); renderLeg(); }
+  if (name === 'leg')    { setDefaultLegDates(); await loadLegData(); renderLeg(); prePopulateLegSteppers(); }
   if (name === 'habits') {
     const habitsDateEl = document.getElementById('habits-date');
     if (habitsDateEl) { habitsDateEl.value = localToday(); habitsDateEl.max = localToday(); }
@@ -2472,6 +2482,40 @@ let legLogs    = [];
 let legContext = [];
 let legChart   = null;
 
+// Leg measurement stepper state
+const legVals = { right: null, left: null };
+
+function adjLeg(side, delta) {
+  if (legVals[side] === null) {
+    // Start from most recent log value if available, else 29.00
+    const recent = [...legLogs].sort((a,b) => b.log_date.localeCompare(a.log_date))[0];
+    legVals[side] = recent ? parseFloat(side === 'right' ? recent.right_ankle : recent.left_ankle) : 29.00;
+  }
+  legVals[side] = Math.round((legVals[side] + delta) * 4) / 4;
+  legVals[side] = Math.min(35, Math.max(25, legVals[side]));
+  updateLegDisplay();
+}
+
+function updateLegDisplay() {
+  const rDisp = document.getElementById('leg-right-display');
+  const lDisp = document.getElementById('leg-left-display');
+  const rHid  = document.getElementById('leg-right');
+  const lHid  = document.getElementById('leg-left');
+  if (rDisp) rDisp.textContent = legVals.right !== null ? legVals.right.toFixed(2) : '—';
+  if (lDisp) lDisp.textContent = legVals.left  !== null ? legVals.left.toFixed(2)  : '—';
+  if (rHid)  rHid.value  = legVals.right !== null ? legVals.right : '';
+  if (lHid)  lHid.value  = legVals.left  !== null ? legVals.left  : '';
+}
+
+function prePopulateLegSteppers() {
+  const recent = [...legLogs].sort((a,b) => b.log_date.localeCompare(a.log_date))[0];
+  if (recent) {
+    legVals.right = parseFloat(recent.right_ankle);
+    legVals.left  = parseFloat(recent.left_ankle);
+    updateLegDisplay();
+  }
+}
+
 function setDefaultLegDates() {
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
@@ -2524,8 +2568,8 @@ async function saveLeg() {
 
   if (saveMeasTile) {
     if (!measDate) { showToast('Please select a measurement date', 'error'); return; }
-    if (isNaN(right) || right < 20 || right > 60) { showToast('Please enter a valid right ankle measurement', 'error'); return; }
-    if (isNaN(left)  || left  < 20 || left  > 60) { showToast('Please enter a valid left ankle measurement', 'error'); return; }
+    if (isNaN(right) || right < 25 || right > 35) { showToast('Please set right ankle measurement (25–35)', 'error'); return; }
+    if (isNaN(left)  || left  < 25 || left  > 35) { showToast('Please set left ankle measurement (25–35)', 'error'); return; }
     saveOps.push(sb.from('leg_logs').upsert({ log_date: measDate, right_ankle: right, left_ankle: left }, { onConflict: 'log_date' }));
   }
 
@@ -2541,12 +2585,14 @@ async function saveLeg() {
 
   showToast('Leg data saved ✓', 'success');
   if (saveMeasTile) {
-    document.getElementById('leg-right').value = '';
-    document.getElementById('leg-left').value  = '';
+    legVals.right = null; legVals.left = null;
+    updateLegDisplay();
+    // Re-populate from newly saved data after reload
   }
   if (saveCtxTile2) document.getElementById('leg-notes').value = '';
   await loadLegData();
   renderLeg();
+  prePopulateLegSteppers();
 }
 
 function renderLeg() {
