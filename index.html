@@ -4193,6 +4193,27 @@ function renderIssueList() {
   el.innerHTML = filtered.map(issue => {
     const relatedRx    = rxList.filter(r => r.appointment_issues?.issue_id === issue.id);
     const relatedAppts = apptIssuesList.filter(a => a.issue_id === issue.id);
+    const notes        = issueNotesList
+      .filter(n => n.issue_id === issue.id)
+      .sort((a,b) => b.note_date.localeCompare(a.note_date));
+    const noteCount    = notes.length;
+    const latestNote   = notes[0];
+
+    const latestNoteHtml = latestNote ? `
+      <div style="margin-top:8px;padding:8px 10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+        <div style="display:flex;gap:8px;align-items:baseline;margin-bottom:3px">
+          <span style="font-size:10px;color:var(--accent);font-weight:600">${latestNote.note_date}</span>
+          <span style="font-size:10px;color:var(--text3)">(most recent)</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(latestNote.note)}</div>
+      </div>` : '';
+
+    const allNotesHtml = notes.map(n => `
+      <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="font-size:10px;color:var(--accent);font-weight:600;margin-bottom:2px">${n.note_date}</div>
+        <div style="font-size:12px;color:var(--text2);white-space:pre-wrap">${esc(n.note)}</div>
+      </div>`).join('');
+
     return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">
       <div style="display:flex;align-items:start;justify-content:space-between;gap:10px">
         <div style="flex:1">
@@ -4208,10 +4229,40 @@ function renderIssueList() {
             ${issue.end_date   ? `<span>Ended: ${issue.end_date}</span>`     : ''}
             ${relatedAppts.length ? `<span>${relatedAppts.length} appt${relatedAppts.length > 1 ? 's' : ''}</span>` : ''}
             ${relatedRx.length    ? `<span>${relatedRx.length} Rx</span>`    : ''}
+            ${noteCount ? `<span style="color:var(--accent)">${noteCount} note${noteCount > 1 ? 's' : ''}</span>` : ''}
           </div>
+          ${latestNoteHtml}
         </div>
         <button onclick="showIssueForm('${issue.id}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--text2);flex-shrink:0">Edit</button>
       </div>
+
+      ${noteCount > 0 ? `
+      <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
+        <button onclick="toggleIssueNotes('${issue.id}', this)" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--accent);padding:0;font-family:var(--font-body)">
+          ▶ Show all ${noteCount} note${noteCount > 1 ? 's' : ''}
+        </button>
+        <div id="notes-expand-${issue.id}" style="display:none;margin-top:8px">
+          ${allNotesHtml}
+          <button onclick="showInlineNoteForm('${issue.id}')" style="margin-top:8px;background:none;border:none;cursor:pointer;font-size:12px;color:var(--accent);padding:0;font-family:var(--font-body)">+ Add note</button>
+          <div id="inline-note-form-${issue.id}" style="display:none;margin-top:8px">
+            <div style="display:flex;gap:6px;margin-bottom:6px">
+              <input type="date" id="inline-note-date-${issue.id}" value="${localToday()}" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:12px;padding:4px 6px;outline:none;flex:1">
+            </div>
+            <textarea id="inline-note-text-${issue.id}" rows="2" placeholder="Enter note..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:13px;padding:6px 8px;outline:none;resize:vertical;margin-bottom:6px"></textarea>
+            <button onclick="saveInlineNote('${issue.id}')" style="background:var(--accent);color:white;border:none;border-radius:8px;padding:5px 14px;font-size:12px;cursor:pointer;font-family:var(--font-body)">Save note</button>
+          </div>
+        </div>
+      </div>` : `
+      <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
+        <button onclick="showInlineNoteForm('${issue.id}')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--accent);padding:0;font-family:var(--font-body)">+ Add note</button>
+        <div id="inline-note-form-${issue.id}" style="display:none;margin-top:8px">
+          <div style="display:flex;gap:6px;margin-bottom:6px">
+            <input type="date" id="inline-note-date-${issue.id}" value="${localToday()}" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:12px;padding:4px 6px;outline:none;flex:1">
+          </div>
+          <textarea id="inline-note-text-${issue.id}" rows="2" placeholder="Enter note..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:13px;padding:6px 8px;outline:none;resize:vertical;margin-bottom:6px"></textarea>
+          <button onclick="saveInlineNote('${issue.id}')" style="background:var(--accent);color:white;border:none;border-radius:8px;padding:5px 14px;font-size:12px;cursor:pointer;font-family:var(--font-body)">Save note</button>
+        </div>
+      </div>`}
     </div>`;
   }).join('');
 }
@@ -4561,6 +4612,42 @@ async function unlinkIssueFromAppt(apptIssueId) {
   showToast('Issue unlinked', 'success');
   await loadIssuesData();
 }
+
+// ── Inline issue notes ───────────────────────────
+function toggleIssueNotes(issueId, btn) {
+  const el = document.getElementById('notes-expand-' + issueId);
+  if (!el) return;
+  const expanded = el.style.display !== 'none';
+  el.style.display = expanded ? 'none' : 'block';
+  const count = issueNotesList.filter(n => n.issue_id === issueId).length;
+  btn.textContent = expanded
+    ? '▶ Show all ' + count + ' note' + (count > 1 ? 's' : '')
+    : '▼ Hide notes';
+}
+
+function showInlineNoteForm(issueId) {
+  const el = document.getElementById('inline-note-form-' + issueId);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveInlineNote(issueId) {
+  const dateEl = document.getElementById('inline-note-date-' + issueId);
+  const textEl = document.getElementById('inline-note-text-' + issueId);
+  if (!dateEl || !textEl) return;
+  const dateVal = dateEl.value;
+  const noteVal = textEl.value.trim();
+  if (!dateVal) { showToast('Please select a date', 'error'); return; }
+  if (!noteVal) { showToast('Note cannot be empty', 'error'); return; }
+
+  const { error } = await sb.from('issue_notes').insert({
+    issue_id: issueId, note_date: dateVal, note: noteVal
+  });
+  if (error) { showToast('Error saving note', 'error'); return; }
+  showToast('Note saved ✓', 'success');
+  await loadIssuesData();
+  renderIssueList();
+}
+
 
 // ── Auth ─────────────────────────────────────────
 const PASSPHRASE_HASH = 'e572930d76aba6e27324d2ed17461a3f2083ada5d12f992df83586a56f66ee03';
