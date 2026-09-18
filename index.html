@@ -1777,6 +1777,22 @@
     <div class="backlog-item"><span class="tag tag-ux">UX</span>Streaks &amp; Progress — add visual element (e.g. bar chart)</div>
     <div class="backlog-item"><span class="tag tag-feature">Feature</span>Weekly habit descriptions — support markdown/links rendering</div>
 
+    <h3 style="margin-top:16px">Issues Tab</h3>
+    <div class="backlog-item"><span class="tag tag-ux">UX</span>Notes subtab now secondary — consider removing or repurposing</div>
+
+    <h3 style="margin-top:16px">Rx Tab</h3>
+    <div class="backlog-item"><span class="tag tag-feature">Feature</span>Require issue selection at minimum when saving a prescription</div>
+
+    <h3 style="margin-top:16px">Weight Tab</h3>
+    <div class="backlog-item"><span class="tag tag-feature">Feature</span>5-week and 10-week forecast based on current rolling avg trend</div>
+    <div class="backlog-item"><span class="tag tag-feature">Feature</span>Milestone projections — how long to hit incremental weight targets</div>
+    <div class="backlog-item"><span class="tag tag-ux">UX</span>Unfreeze flow — make frozen target / glide path behavior clearer in UI</div>
+    <div class="backlog-item"><span class="tag tag-feature">Feature</span>Show 14-day rolling avg weight on diary entry form, save with diary record</div>
+
+    <h3 style="margin-top:16px">Leg Tab</h3>
+    <div class="backlog-item"><span class="tag tag-ux">UX</span>Chart tightness on mobile with dual y-axis labels</div>
+    <div class="backlog-item"><span class="tag tag-feature">Feature</span>Activity correlation analysis</div>
+
     <h3 style="margin-top:16px">All Tabs</h3>
     <div class="backlog-item"><span class="tag tag-ux">UX</span>Date input fields overflowing panel frames on mobile (low priority)</div>
     <div class="backlog-item"><span class="tag tag-ux">UX</span>Dynamic font shrink not reducing enough on mobile (low priority)</div>
@@ -1796,6 +1812,10 @@
 
   <h2>Version History</h2>
   <div class="card">
+    <div class="version-row">
+      <div class="version-date">2026-09-17</div>
+      <div class="version-desc">Stats frame background color on weight tab (blue/green/amber/red based on weight vs avg and target). Leg measurement inputs replaced with stepper (+ / − in 0.25 increments, pre-populated from most recent entry). Doctor directory: phone is clickable tel: link, address opens Apple Maps. Issue cards: inline notes — most recent note visible, expand to see all, add note without leaving Issues tab.</div>
+    </div>
     <div class="version-row">
       <div class="version-date">2026-09-11</div>
       <div class="version-desc">Issues tab (issues list, notes log), Rx tab (prescriptions with issue/appt linking, filters by status/issue/practice). Appointment-issues junction table. Removed prescribed/prescription_notes from appointments. weight_logs.target column added — stored calculated target on each weight save, projected forward for future dates.</div>
